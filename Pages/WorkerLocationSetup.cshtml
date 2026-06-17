@@ -1,0 +1,233 @@
+@page
+@model HRMS.Pages.WorkerLocationSetupModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.WorkerLocationID > 0 ? "Edit Worker Location" : "Add Worker Location")</h2>
+            </div>
+            <form method="post" action="/WorkerLocationSetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="workerLocationID" value="@Model.Input.WorkerLocationID" />
+                <div class="card-body">
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label>Employee <span class="required">*</span></label>
+                            <select name="employeeID" class="form-control">
+                                <option value="">-- Select Employee --</option>
+                                @foreach (var emp in Model.Employees)
+                                {
+                                    if (Model.Input.EmployeeID == emp.Id)
+                                    {
+                                        <option value="@emp.Id" selected>@emp.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@emp.Id">@emp.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Primary Work Location <span class="required">*</span></label>
+                            <select name="primaryLocationID" class="form-control">
+                                <option value="">-- Select Location --</option>
+                                @foreach (var loc in Model.Locations)
+                                {
+                                    if (Model.Input.PrimaryLocationID == loc.Id)
+                                    {
+                                        <option value="@loc.Id" selected>@loc.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@loc.Id">@loc.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Secondary Location</label>
+                            <select name="secondaryLocationID" class="form-control">
+                                <option value="">-- Select Location --</option>
+                                @foreach (var loc in Model.Locations)
+                                {
+                                    if (Model.Input.SecondaryLocationID == loc.Id)
+                                    {
+                                        <option value="@loc.Id" selected>@loc.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@loc.Id">@loc.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Work Location Type</label>
+                            <select name="workLocationTypeID" class="form-control">
+                                <option value="">-- Select Work Location Type --</option>
+                                @foreach (var item in Model.WorkLocationTypes)
+                                {
+                                    if (Model.Input.WorkLocationTypeID == item.Id)
+                                    {
+                                        <option value="@item.Id" selected>@item.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Id">@item.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Work Arrangement</label>
+                            <select name="workArrangementID" class="form-control">
+                                <option value="">-- Select Work Arrangement --</option>
+                                @foreach (var item in Model.WorkArrangements)
+                                {
+                                    if (Model.Input.WorkArrangementID == item.Id)
+                                    {
+                                        <option value="@item.Id" selected>@item.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item.Id">@item.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Hybrid Schedule</label>
+                            <input type="text" name="hybridSchedule" class="form-control"
+                                   value="@Model.Input.HybridSchedule" maxlength="500"
+                                   placeholder="e.g. Mon/Wed/Fri office, Tue/Thu remote" />
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Territory / Region Assignment</label>
+                            <input type="text" name="territoryRegionAssignment" class="form-control"
+                                   value="@Model.Input.TerritoryRegionAssignment" maxlength="500"
+                                   placeholder="e.g. North Region, Karachi Territory" />
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Client Site Access</label>
+                            <input type="text" name="clientSiteAccess" class="form-control"
+                                   value="@Model.Input.ClientSiteAccess" maxlength="500"
+                                   placeholder="e.g. Client ABC HQ, Site B warehouse" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true"
+                                       @(Model.Input.IsActive ? "checked" : "") /> Active
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Input.WorkerLocationID > 0 ? "Update" : "Save")
+                    </button>
+                    <a href="/WorkerLocationSetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header space-between">
+                <h2>Worker Location List</h2>
+                <input type="text" id="txtSearch" class="form-control" style="width:220px"
+                       placeholder="Search…" onkeyup="searchTable(this.value)" />
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table" id="wlTable">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Employee</th>
+                            <th>Primary Location</th>
+                            <th>Secondary Location</th>
+                            <th>Location Type</th>
+                            <th>Arrangement</th>
+                            <th>Hybrid Schedule</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="8">No worker location records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Records)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@item.EmployeeCode</strong><br />
+                                        <span style="font-size:.85rem;color:#6b7280;">@item.EmployeeName</span>
+                                    </td>
+                                    <td>@item.PrimaryLocationName</td>
+                                    <td>@(string.IsNullOrEmpty(item.SecondaryLocationName) ? "—" : item.SecondaryLocationName)</td>
+                                    <td>@(string.IsNullOrEmpty(item.WorkLocationTypeName) ? "—" : item.WorkLocationTypeName)</td>
+                                    <td>@(string.IsNullOrEmpty(item.WorkArrangementName) ? "—" : item.WorkArrangementName)</td>
+                                    <td style="max-width:180px;white-space:normal;">@(string.IsNullOrEmpty(item.HybridSchedule) ? "—" : item.HybridSchedule)</td>
+                                    <td>
+                                        <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">
+                                            @(item.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/WorkerLocationSetup?editId=@item.WorkerLocationID">Edit</a>
+                                        <form method="post" action="/WorkerLocationSetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.WorkerLocationID" />
+                                            <button type="submit" class="btn-icon btn-delete"
+                                                    onclick="return confirm('Deactivate this worker location?')">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+    <script>
+        function searchTable(q) {
+            q = (q || '').toLowerCase();
+            document.querySelectorAll('#wlTable tbody tr').forEach(function (r) {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

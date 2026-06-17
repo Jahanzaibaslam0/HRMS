@@ -1,0 +1,166 @@
+@page
+@model HRMS.Pages.ExtensionSetupModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.ExtensionID > 0 ? "Edit Extension" : "Add Extension")</h2>
+            </div>
+            <form method="post" action="/ExtensionSetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="extensionID" value="@Model.Input.ExtensionID" />
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Code <span class="required">*</span></label>
+                            <input type="text" name="extensionCode" class="form-control"
+                                   value="@Model.Input.ExtensionCode" maxlength="20" placeholder="e.g. EXT-001" />
+                        </div>
+                        <div class="form-group">
+                            <label>Name <span class="required">*</span></label>
+                            <input type="text" name="extensionName" class="form-control"
+                                   value="@Model.Input.ExtensionName" maxlength="150"
+                                   placeholder="e.g. Main Office Extension" />
+                        </div>
+                        <div class="form-group">
+                            <label>Alias</label>
+                            <input type="text" name="aliasName" class="form-control"
+                                   value="@Model.Input.AliasName" maxlength="100"
+                                   placeholder="Short name / abbreviation" />
+                        </div>
+                        <div class="form-group">
+                            <label>Department</label>
+                            <select name="departmentID" class="form-control">
+                                <option value="">-- Select Department --</option>
+                                @foreach (var dept in Model.Departments)
+                                {
+                                    if (Model.Input.DepartmentID == dept.Id)
+                                    {
+                                        <option value="@dept.Id" selected>@dept.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@dept.Id">@dept.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Location</label>
+                            <select name="locationID" class="form-control">
+                                <option value="">-- Select Location --</option>
+                                @foreach (var loc in Model.Locations)
+                                {
+                                    if (Model.Input.LocationID == loc.Id)
+                                    {
+                                        <option value="@loc.Id" selected>@loc.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@loc.Id">@loc.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true"
+                                       @(Model.Input.IsActive ? "checked" : "") /> Active
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Input.ExtensionID > 0 ? "Update" : "Save")
+                    </button>
+                    <a href="/ExtensionSetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header space-between">
+                <h2>Extension List</h2>
+                <input type="text" id="txtSearch" class="form-control" style="width:220px"
+                       placeholder="Search…" onkeyup="searchTable(this.value)" />
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table" id="dataTable">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Alias</th>
+                            <th>Department</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="7">No records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Records)
+                            {
+                                <tr>
+                                    <td><code style="font-size:.75rem;background:#f1f5f9;padding:.1rem .4rem;border-radius:4px;">@item.ExtensionCode</code></td>
+                                    <td>@item.ExtensionName</td>
+                                    <td>@item.AliasName</td>
+                                    <td>@(string.IsNullOrEmpty(item.DepartmentName) ? "—" : item.DepartmentName)</td>
+                                    <td>@(string.IsNullOrEmpty(item.LocationName) ? "—" : item.LocationName)</td>
+                                    <td>
+                                        <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">
+                                            @(item.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/ExtensionSetup?editId=@item.ExtensionID">Edit</a>
+                                        <form method="post" action="/ExtensionSetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.ExtensionID" />
+                                            <button type="submit" class="btn-icon btn-delete"
+                                                    onclick="return confirm('Remove this extension?')">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+    <script>
+        function searchTable(q) {
+            q = (q || '').toLowerCase();
+            document.querySelectorAll('#dataTable tbody tr').forEach(function (r) {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

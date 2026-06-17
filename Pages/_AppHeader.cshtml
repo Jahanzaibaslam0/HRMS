@@ -1,0 +1,281 @@
+@model string
+
+@inject HRMS.Services.AuthService Auth
+
+<header class="app-header">
+
+    <div class="app-brand-band">
+
+        <a href="/EmployeeMaster" class="app-logo" aria-label="HRMS Home">
+
+            <span class="app-logo-mark">HR</span>
+
+        </a>
+
+        <div class="app-title-block">
+
+            <a href="/EmployeeMaster" class="brand-link">HRMS</a>
+
+            <div class="app-subtitle">Human Resource Management System</div>
+
+        </div>
+
+        <div class="navbar-right">
+
+            <span class="page-title">@Model</span>
+
+            @if (Auth.IsLoggedIn)
+
+            {
+
+                <span style="font-size:.82rem; color:#c8dfc8; margin-right:.75rem;">
+
+                    @Auth.CurrentUsername
+
+                    @if (Auth.IsAdmin) { <span class="badge badge-warning" style="font-size:.65rem; padding:1px 6px;">Admin</span> }
+
+                </span>
+
+                <a href="/Login?handler=Logout" class="btn btn-secondary" style="padding:3px 12px; font-size:.78rem; margin-right:.5rem;">Logout</a>
+
+            }
+
+            <span id="clock" class="clock"></span>
+
+        </div>
+
+    </div>
+
+    <nav class="app-nav">
+
+        <a href="/EmployeeMaster" class="nav-link">Employee Master</a>
+
+        <a href="/EmployeeReport" class="nav-link">Internal Employee Directory</a>
+
+        <div class="nav-menu">
+
+            <button type="button" class="nav-menu-button" data-menu="org">
+
+                Organization Setup <span class="nav-caret">▾</span>
+
+            </button>
+
+            <div class="nav-menu-content">
+
+                <a href="/DivisionSetup">Division</a>
+
+                <a href="/BusinessSegmentSetup">Business Segment</a>
+
+                <a href="/BusinessUnitSetup">Business Unit</a>
+
+                <a href="/WorkforceSegmentSetup">Workforce Segment</a>
+
+                <a href="/UnitSetup">Unit</a>
+
+                <a href="/WingSetup">Wing</a>
+
+                <a href="/GenderSetup">Gender</a>
+
+                <a href="/ReligionSetup">Religion</a>
+
+                <a href="/NationalitySetup">Nationality</a>
+
+                <a href="/LanguageSetup">Language</a>
+
+                <a href="/BankSetup">Bank Master</a>
+
+                <a href="/CostCenterSetup">Cost Center</a>
+
+                <a href="/SkillSetup">Skill</a>
+
+                <a href="/LegalEntitySetup">Legal Entity</a>
+
+                <a href="/SalesTeamSetup">Sales Team</a>
+
+                <a href="/WorkLocationTypeSetup">Work Location Type</a>
+
+                <a href="/WorkArrangementSetup">Work Arrangement</a>
+
+                <a href="/ExtensionSetup">Extension</a>
+
+                <a href="/CitySetup">City</a>
+
+                <a href="/ProvinceSetup">Province</a>
+
+                <a href="/SalesGroupSetup">Sales Group</a>
+
+                <a href="/DepartmentSetup">Department</a>
+
+                <a href="/RegionSetup">Region</a>
+
+                <a href="/LocationSetup">Location</a>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="nav-menu">
+
+            <button type="button" class="nav-menu-button" data-menu="emp">
+
+                Employee Setup <span class="nav-caret">▾</span>
+
+            </button>
+
+            <div class="nav-menu-content">
+
+                <a href="/GradeSetup">Grade</a>
+
+                <a href="/EmploymentTypeSetup">Employment Type</a>
+
+                <a href="/DesignationLevelSetup">Designation Level</a>
+
+                <a href="/EmploymentStatusSetup">Employment Status</a>
+
+                <a href="/BenefitSetup">Benefit</a>
+
+                <a href="/BenefitEntitlementSetup">Benefit Entitlement</a>
+
+                <a href="/ExpenseCategorySetup">Expense Category</a>
+
+                <a href="/BloodGroupSetup">Blood Group</a>
+
+                <a href="/WorkerCategorySetup">Worker Category</a>
+
+                <a href="/JobSetup">Job</a>
+
+                <a href="/WorkerLocationSetup">Worker Location</a>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="nav-menu">
+
+            <button type="button" class="nav-menu-button" data-menu="sec">
+
+                Security <span class="nav-caret">▾</span>
+
+            </button>
+
+            <div class="nav-menu-content">
+
+                <a href="/UserSetup">User Setup</a>
+
+                <a href="/UserRightsSetup">User Rights</a>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+</header>
+
+<script>
+
+    (function initSharedClock() {
+
+        function tick() {
+
+            var el = document.getElementById('clock');
+
+            if (!el) return;
+
+            var now = new Date();
+
+            el.textContent = now.toLocaleDateString('en-PK', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) + '  ' + now.toLocaleTimeString('en-PK');
+
+        }
+
+        tick();
+
+        setInterval(tick, 1000);
+
+
+
+        var currentPath = window.location.pathname.toLowerCase();
+
+
+
+        document.querySelectorAll('.app-nav a').forEach(function (link) {
+
+            if (link.getAttribute('href').toLowerCase() === currentPath) {
+
+                link.classList.add('active');
+
+            }
+
+        });
+
+
+
+        var orgPaths = [
+
+            '/divisionsetup', '/businesssegmentsetup', '/businessunitsetup', '/workforcesegmentsetup',
+
+            '/unitsetup', '/wingsetup',
+
+            '/gendersetup', '/religionsetup', '/nationalitysetup', '/languagesetup',
+
+            '/banksetup', '/costcentersetup', '/skillsetup',
+
+            '/legalentitysetup', '/salesteamsetup',
+
+            '/worklocationtypesetup', '/workarrangementsetup', '/extensionsetup',
+
+            '/citysetup', '/provincesetup', '/salesgroupsetup',
+
+            '/departmentsetup', '/regionsetup', '/locationsetup'
+
+        ];
+
+        var empPaths = [
+
+            '/gradesetup',
+
+            '/employmenttypesetup', '/designationlevelsetup', '/employmentstatussetup',
+
+            '/benefitsetup', '/benefitentitlementsetup', '/expensecategorysetup', '/bloodgroupsetup',
+
+            '/workercategorysetup', '/jobsetup', '/workerlocationsetup'
+
+        ];
+
+        var secPaths = ['/usersetup', '/userrightssetup'];
+
+
+
+        if (orgPaths.indexOf(currentPath) >= 0) {
+
+            var orgBtn = document.querySelector('[data-menu="org"]');
+
+            if (orgBtn) orgBtn.classList.add('active');
+
+        }
+
+        if (empPaths.indexOf(currentPath) >= 0) {
+
+            var empBtn = document.querySelector('[data-menu="emp"]');
+
+            if (empBtn) empBtn.classList.add('active');
+
+        }
+
+        if (secPaths.indexOf(currentPath) >= 0) {
+
+            var secBtn = document.querySelector('[data-menu="sec"]');
+
+            if (secBtn) secBtn.classList.add('active');
+
+        }
+
+    }());
+
+</script>
+
+

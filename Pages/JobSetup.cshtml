@@ -1,0 +1,252 @@
+@page
+@model HRMS.Pages.JobSetupModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.JobID > 0 ? "Edit Job" : "Add Job")</h2>
+            </div>
+            <form method="post" action="/JobSetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="jobID" value="@Model.Input.JobID" />
+                <div class="card-body">
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label>Job Title <span class="required">*</span></label>
+                            <input type="text" name="jobTitle" class="form-control"
+                                   value="@Model.Input.JobTitle" maxlength="100"
+                                   placeholder="e.g. Senior Software Engineer" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Job Code <span class="required">*</span></label>
+                            <input type="text" name="jobCode" class="form-control"
+                                   value="@Model.Input.JobCode" maxlength="20"
+                                   placeholder="JC-XXX-999" />
+                            <small style="color:#6b7280;font-size:.78rem;">Format: JC-XXX-999</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Job Grade <span class="required">*</span></label>
+                            <select name="gradeID" class="form-control">
+                                <option value="">-- Select Grade --</option>
+                                @foreach (var grade in Model.Grades)
+                                {
+                                    if (Model.Input.GradeID == grade.Id)
+                                    {
+                                        <option value="@grade.Id" selected>@grade.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@grade.Id">@grade.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Job Level <span class="required">*</span></label>
+                            <select name="jobLevel" class="form-control">
+                                <option value="">-- Select Level --</option>
+                                @foreach (var level in HRMS.Pages.JobSetupModel.JobLevels)
+                                {
+                                    if (Model.Input.JobLevel == level)
+                                    {
+                                        <option value="@level" selected>@level</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@level">@level</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Position Number <span class="required">*</span></label>
+                            <input type="text" name="positionNumber" class="form-control"
+                                   value="@Model.Input.PositionNumber" maxlength="20"
+                                   placeholder="POS-999999" />
+                            <small style="color:#6b7280;font-size:.78rem;">Format: POS-999999</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Reports To (Supervisor) <span class="required">*</span></label>
+                            <select name="reportsToEmployeeID" class="form-control">
+                                <option value="">-- Select Employee --</option>
+                                @foreach (var emp in Model.Employees)
+                                {
+                                    if (Model.Input.ReportsToEmployeeID == emp.Id)
+                                    {
+                                        <option value="@emp.Id" selected>@emp.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@emp.Id">@emp.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Functional Manager</label>
+                            <select name="functionalManagerEmployeeID" class="form-control">
+                                <option value="">-- Select Employee --</option>
+                                @foreach (var emp in Model.Employees)
+                                {
+                                    if (Model.Input.FunctionalManagerEmployeeID == emp.Id)
+                                    {
+                                        <option value="@emp.Id" selected>@emp.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@emp.Id">@emp.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Dotted Line Manager</label>
+                            <select name="dottedLineManagerEmployeeID" class="form-control">
+                                <option value="">-- Select Employee --</option>
+                                @foreach (var emp in Model.Employees)
+                                {
+                                    if (Model.Input.DottedLineManagerEmployeeID == emp.Id)
+                                    {
+                                        <option value="@emp.Id" selected>@emp.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@emp.Id">@emp.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Backup Approver <span class="required">*</span></label>
+                            <select name="backupApproverEmployeeID" class="form-control">
+                                <option value="">-- Select Employee --</option>
+                                @foreach (var emp in Model.Employees)
+                                {
+                                    if (Model.Input.BackupApproverEmployeeID == emp.Id)
+                                    {
+                                        <option value="@emp.Id" selected>@emp.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@emp.Id">@emp.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true"
+                                       @(Model.Input.IsActive ? "checked" : "") /> Active
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Input.JobID > 0 ? "Update Job" : "Save Job")
+                    </button>
+                    <a href="/JobSetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header space-between">
+                <h2>Job List</h2>
+                <input type="text" id="txtSearch" class="form-control" style="width:220px"
+                       placeholder="Search…" onkeyup="searchTable(this.value)" />
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table" id="jobTable">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Job Code</th>
+                            <th>Job Title</th>
+                            <th>Grade</th>
+                            <th>Level</th>
+                            <th>Position No.</th>
+                            <th>Reports To</th>
+                            <th>Backup Approver</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="9">No jobs found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Records)
+                            {
+                                <tr>
+                                    <td><strong>@item.JobCode</strong></td>
+                                    <td>@item.JobTitle</td>
+                                    <td>@item.GradeName</td>
+                                    <td><span class="badge badge-info">@item.JobLevel</span></td>
+                                    <td>@item.PositionNumber</td>
+                                    <td>@item.ReportsToName</td>
+                                    <td>@item.BackupApproverName</td>
+                                    <td>
+                                        <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">
+                                            @(item.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/JobSetup?editId=@item.JobID">Edit</a>
+                                        <form method="post" action="/JobSetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.JobID" />
+                                            <button type="submit" class="btn-icon btn-delete"
+                                                    onclick="return confirm('Deactivate this job?')">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+    <script>
+        function searchTable(q) {
+            q = q.toLowerCase();
+            document.querySelectorAll('#jobTable tbody tr').forEach(function (r) {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

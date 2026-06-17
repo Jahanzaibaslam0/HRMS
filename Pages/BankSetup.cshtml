@@ -1,0 +1,161 @@
+﻿@page
+@model HRMS.Pages.BankSetupModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - Bank Master Setup</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", "Bank Master Setup")
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.BankID > 0 ? "Edit Bank Master" : "Add Bank Master")</h2>
+            </div>
+            <form method="post" action="/BankSetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="bankID" value="@Model.Input.BankID" />
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Bank Name <span class="required">*</span></label>
+                            <input type="text" name="bankName" class="form-control" value="@Model.Input.BankName" maxlength="150" />
+                        </div>
+                        <div class="form-group">
+                            <label>Branch Code</label>
+                            <input type="text" name="branchCode" class="form-control" value="@Model.Input.BranchCode" maxlength="50" />
+                        </div>
+                        <div class="form-group">
+                            <label>Branch Name</label>
+                            <input type="text" name="branchName" class="form-control" value="@Model.Input.BranchName" maxlength="150" />
+                        </div>
+                        <div class="form-group">
+                            <label>Account Title</label>
+                            <input type="text" name="accountTitle" class="form-control" value="@Model.Input.AccountTitle" maxlength="150" />
+                        </div>
+                        <div class="form-group">
+                            <label>IBAN</label>
+                            <input type="text" name="iban" class="form-control" value="@Model.Input.IBAN" maxlength="50" />
+                        </div>
+                        <div class="form-group">
+                            <label>Swift/BIC Code</label>
+                            <input type="text" name="swiftBICCode" class="form-control" value="@Model.Input.SwiftBICCode" maxlength="50" />
+                        </div>
+                        <div class="form-group">
+                            <label>Account Type</label>
+                            <select name="accountType" class="form-control">
+                                <option value="">-- Select Account Type --</option>
+                                @foreach (var accountType in new[] { "Current", "Saving", "Salary", "Business", "Other" })
+                                {
+                                    if (Model.Input.AccountType == accountType)
+                                    {
+                                        <option value="@accountType" selected>@accountType</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@accountType">@accountType</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Account Verification Status</label>
+                            <select name="accountVerificationStatus" class="form-control">
+                                @foreach (var status in new[] { "Pending", "Verified", "Rejected", "Not Required" })
+                                {
+                                    if (Model.Input.AccountVerificationStatus == status)
+                                    {
+                                        <option value="@status" selected>@status</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@status">@status</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true" @(Model.Input.IsActive ? "checked" : "") />
+                                Active
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.Input.BankID > 0 ? "Update Bank" : "Save Bank")</button>
+                    <a href="/BankSetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header"><h2>Bank Master List</h2></div>
+            <div class="card-body table-responsive">
+                <table class="data-table">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Bank Name</th>
+                            <th>Branch Code</th>
+                            <th>Branch Name</th>
+                            <th>Account Title</th>
+                            <th>IBAN</th>
+                            <th>Swift/BIC</th>
+                            <th>Account Type</th>
+                            <th>Verification</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Banks.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="10">No bank records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var bank in Model.Banks)
+                            {
+                                <tr>
+                                    <td>@bank.BankName</td>
+                                    <td>@bank.BranchCode</td>
+                                    <td>@bank.BranchName</td>
+                                    <td>@bank.AccountTitle</td>
+                                    <td>@bank.IBAN</td>
+                                    <td>@bank.SwiftBICCode</td>
+                                    <td>@bank.AccountType</td>
+                                    <td>@bank.AccountVerificationStatus</td>
+                                    <td><span class="badge @(bank.IsActive ? "badge-success" : "badge-danger")">@(bank.IsActive ? "Active" : "Inactive")</span></td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/BankSetup?editId=@bank.BankID" title="Edit">Edit</a>
+                                        <form method="post" action="/BankSetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@bank.BankID" />
+                                            <button type="submit" class="btn-icon btn-delete" title="Remove">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    @await Html.PartialAsync("_AppFooter")
+</body>
+</html>
+

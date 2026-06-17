@@ -1,0 +1,226 @@
+@page
+@model HRMS.Pages.UserRightsSetupModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+    <style>
+        .rights-table th { text-align: center; }
+        .rights-table td.perm-col { text-align: center; }
+        .rights-table input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; }
+        .cat-row td {
+            background: #f3f4f6;
+            font-weight: 700;
+            font-size: .8rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: #374151;
+        }
+        .admin-notice {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 6px;
+            padding: .75rem 1rem;
+            color: #92400e;
+            margin-bottom: 1rem;
+        }
+        .user-picker { display: flex; gap: .75rem; align-items: flex-end; flex-wrap: wrap; }
+        .user-picker .form-group { margin: 0; min-width: 280px; }
+    </style>
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <!-- User selector -->
+        <div class="card">
+            <div class="card-header"><h2>Select User</h2></div>
+            <div class="card-body user-picker">
+                <div class="form-group">
+                    <label>User</label>
+                    <select id="ddlUser" class="form-control" onchange="goUser(this.value)">
+                        <option value="">-- Select User --</option>
+                        @foreach (var u in Model.Users)
+                        {
+                            if (Model.SelectedUserId == u.UserID)
+                            {
+                                <option value="@u.UserID" selected>@u.FullName (@u.Username)</option>
+                            }
+                            else
+                            {
+                                <option value="@u.UserID">@u.FullName (@u.Username)</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <a href="/UserSetup" class="btn btn-secondary">+ Add New User</a>
+            </div>
+        </div>
+
+        @if (Model.SelectedUserId > 0)
+        {
+            @if (Model.SelectedIsAdmin)
+            {
+                <div class="admin-notice">
+                    <strong>@Model.SelectedFullName</strong> is an <strong>Administrator</strong> and has full Read, Write, and Delete access to all forms. Rights below do not apply to admins.
+                </div>
+            }
+
+            <div class="card mt-4">
+                <div class="card-header space-between">
+                    <h2>Form Rights — @Model.SelectedFullName</h2>
+                    <div>
+                        <button type="button" class="btn btn-secondary" onclick="checkAll('read', true)">All Read</button>
+                        <button type="button" class="btn btn-secondary" onclick="checkAll('write', true)">All Write</button>
+                        <button type="button" class="btn btn-secondary" onclick="checkAll('delete', true)">All Delete</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+                    </div>
+                </div>
+
+                <form method="post" action="/UserRightsSetup?handler=Save" id="rightsForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="userId" value="@Model.SelectedUserId" />
+                    <input type="hidden" name="permissionsJson" id="permissionsJson" />
+
+                    <div class="card-body table-responsive">
+                        <table class="data-table rights-table" id="rightsTable">
+                            <thead class="grid-header">
+                                <tr>
+                                    <th style="text-align:left;">Form / Screen</th>
+                                    <th style="width:90px;">Read</th>
+                                    <th style="width:90px;">Write</th>
+                                    <th style="width:90px;">Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    string? lastCat = null;
+                                    foreach (var p in Model.Permissions)
+                                    {
+                                        if (p.Category != lastCat)
+                                        {
+                                            lastCat = p.Category;
+                                            <tr class="cat-row">
+                                                <td colspan="4">@p.Category</td>
+                                            </tr>
+                                        }
+                                        <tr data-form="@p.FormKey">
+                                            <td>@p.FormName</td>
+                                            <td class="perm-col">
+                                                <input type="checkbox" class="perm-read"
+                                                       data-key="@p.FormKey"
+                                                       @(p.CanRead ? "checked" : "") />
+                                            </td>
+                                            <td class="perm-col">
+                                                <input type="checkbox" class="perm-write"
+                                                       data-key="@p.FormKey"
+                                                       @(p.CanWrite ? "checked" : "") />
+                                            </td>
+                                            <td class="perm-col">
+                                                <input type="checkbox" class="perm-delete"
+                                                       data-key="@p.FormKey"
+                                                       @(p.CanDelete ? "checked" : "") />
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary"
+                                onclick="return prepareRightsPayload();">
+                            Save User Rights
+                        </button>
+                        <a href="/UserSetup" class="btn btn-secondary">Back to Users</a>
+                    </div>
+                </form>
+            </div>
+        }
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+
+    <script>
+        function goUser(id) {
+            if (id) window.location.href = '/UserRightsSetup?userId=' + id;
+        }
+
+        function checkAll(type, val) {
+            document.querySelectorAll('.perm-' + type).forEach(function (cb) { cb.checked = val; });
+            // Write implies read; delete implies write+read
+            if (type === 'write' && val)
+                document.querySelectorAll('.perm-read').forEach(function (cb) { cb.checked = true; });
+            if (type === 'delete' && val) {
+                document.querySelectorAll('.perm-read, .perm-write').forEach(function (cb) { cb.checked = true; });
+            }
+        }
+
+        function clearAll() {
+            document.querySelectorAll('.perm-read, .perm-write, .perm-delete')
+                .forEach(function (cb) { cb.checked = false; });
+        }
+
+        // Auto-check read when write is checked; read+write when delete is checked
+        document.querySelectorAll('.perm-write').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                if (cb.checked) {
+                    var row = cb.closest('tr');
+                    var r = row.querySelector('.perm-read');
+                    if (r) r.checked = true;
+                }
+            });
+        });
+        document.querySelectorAll('.perm-delete').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                if (cb.checked) {
+                    var row = cb.closest('tr');
+                    row.querySelector('.perm-read').checked  = true;
+                    row.querySelector('.perm-write').checked = true;
+                }
+            });
+        });
+        document.querySelectorAll('.perm-read').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                if (!cb.checked) {
+                    var row = cb.closest('tr');
+                    row.querySelector('.perm-write').checked  = false;
+                    row.querySelector('.perm-delete').checked = false;
+                }
+            });
+        });
+        document.querySelectorAll('.perm-write').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+                if (!cb.checked) {
+                    cb.closest('tr').querySelector('.perm-delete').checked = false;
+                }
+            });
+        });
+
+        function prepareRightsPayload() {
+            var rows = [];
+            document.querySelectorAll('#rightsTable tbody tr[data-form]').forEach(function (tr) {
+                var key = tr.getAttribute('data-form');
+                rows.push({
+                    formKey:   key,
+                    canRead:   tr.querySelector('.perm-read').checked,
+                    canWrite:  tr.querySelector('.perm-write').checked,
+                    canDelete: tr.querySelector('.perm-delete').checked
+                });
+            });
+            document.getElementById('permissionsJson').value = JSON.stringify(rows);
+            return true;
+        }
+    </script>
+</body>
+</html>

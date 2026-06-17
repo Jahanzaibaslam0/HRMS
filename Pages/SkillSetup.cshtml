@@ -1,0 +1,243 @@
+@page
+@model HRMS.Pages.SkillSetupModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.SkillID > 0 ? "Edit Skill" : "Add Skill")</h2>
+            </div>
+            <form method="post" action="/SkillSetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="skillID" value="@Model.Input.SkillID" />
+
+                <div class="card-body">
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label>Skill Code</label>
+                            <input type="text"
+                                   name="skillCode"
+                                   class="form-control"
+                                   value="@(Model.Input.SkillID > 0 ? Model.Input.SkillCode : Model.NextSkillCode)"
+                                   readonly
+                                   style="background:#f8fafc;color:var(--text-muted);cursor:not-allowed;" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Skill Name <span class="required">*</span></label>
+                            <input type="text"
+                                   name="skillName"
+                                   class="form-control"
+                                   value="@Model.Input.SkillName"
+                                   maxlength="150"
+                                   placeholder="e.g. Project Management" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Field Type</label>
+                            <select name="fieldType" class="form-control">
+                                <option value="">-- Select Type --</option>
+                                @foreach (var ft in HRMS.Pages.SkillSetupModel.FieldTypes)
+                                {
+                                    if (Model.Input.FieldType == ft)
+                                    {
+                                        <option value="@ft" selected>@ft</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@ft">@ft</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Default Tier</label>
+                            <select name="defaultTier" class="form-control">
+                                <option value="">-- Select Tier --</option>
+                                @foreach (var tier in HRMS.Pages.SkillSetupModel.DefaultTiers)
+                                {
+                                    if (Model.Input.DefaultTier == tier)
+                                    {
+                                        <option value="@tier" selected>@tier</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@tier">@tier</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>ESCO Anchor</label>
+                            <input type="text"
+                                   name="escoAnchor"
+                                   class="form-control"
+                                   value="@Model.Input.ESCOAnchor"
+                                   maxlength="200"
+                                   placeholder="e.g. S0.1 Data Analysis" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Role Coverage</label>
+                            <input type="text"
+                                   name="roleCoverage"
+                                   class="form-control"
+                                   value="@Model.Input.RoleCoverage"
+                                   maxlength="200"
+                                   placeholder="e.g. All Roles / Technical Roles" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Employee Need</label>
+                            <select name="employeeNeed" class="form-control">
+                                <option value="">-- Select Need --</option>
+                                @foreach (var en in HRMS.Pages.SkillSetupModel.EmployeeNeeds)
+                                {
+                                    if (Model.Input.EmployeeNeed == en)
+                                    {
+                                        <option value="@en" selected>@en</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@en">@en</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true"
+                                       @(Model.Input.IsActive ? "checked" : "") />
+                                Active
+                            </label>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Description</label>
+                            <textarea name="description"
+                                      class="form-control"
+                                      maxlength="500"
+                                      rows="3"
+                                      placeholder="Brief description of this skill...">@Model.Input.Description</textarea>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Input.SkillID > 0 ? "Update Skill" : "Save Skill")
+                    </button>
+                    <a href="/SkillSetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header space-between">
+                <h2>Skill List</h2>
+                <div class="search-box">
+                    <input type="text"
+                           id="skillSearch"
+                           class="form-control"
+                           placeholder="Search skills..."
+                           onkeyup="searchTable(this.value)" />
+                </div>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table" id="skillTable">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Code</th>
+                            <th>Skill Name</th>
+                            <th>Field Type</th>
+                            <th>Default Tier</th>
+                            <th>ESCO Anchor</th>
+                            <th>Role Coverage</th>
+                            <th>Employee Need</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="9">No skill records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var skill in Model.Records)
+                            {
+                                <tr>
+                                    <td><code style="font-size:.75rem;background:#f1f5f9;padding:.1rem .4rem;border-radius:4px;">@skill.SkillCode</code></td>
+                                    <td>@skill.SkillName</td>
+                                    <td>@skill.FieldType</td>
+                                    <td>@skill.DefaultTier</td>
+                                    <td>@skill.ESCOAnchor</td>
+                                    <td>@skill.RoleCoverage</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(skill.EmployeeNeed))
+                                        {
+                                            var needClass = skill.EmployeeNeed == "Mandatory" ? "badge-danger"
+                                                          : skill.EmployeeNeed == "Recommended" ? "badge-warning"
+                                                          : "badge-success";
+                                            <span class="badge @needClass">@skill.EmployeeNeed</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @(skill.IsActive ? "badge-success" : "badge-danger")">
+                                            @(skill.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/SkillSetup?editId=@skill.SkillID" title="Edit">Edit</a>
+                                        <form method="post" action="/SkillSetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@skill.SkillID" />
+                                            <button type="submit" class="btn-icon btn-delete" title="Remove"
+                                                    onclick="return confirm('Remove this skill?')">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+
+    <script>
+        function searchTable(keyword) {
+            var kw = (keyword || '').toLowerCase();
+            document.querySelectorAll('#skillTable tbody tr').forEach(function (row) {
+                row.style.display = row.textContent.toLowerCase().indexOf(kw) >= 0 ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

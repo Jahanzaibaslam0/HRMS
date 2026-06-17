@@ -1,0 +1,128 @@
+@page
+@model HRMS.Pages.CitySetupModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.CityID > 0 ? "Edit City" : "Add City")</h2>
+            </div>
+            <form method="post" action="/CitySetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="cityID" value="@Model.Input.CityID" />
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Code <span class="required">*</span></label>
+                            <input type="text" name="cityCode" class="form-control"
+                                   value="@Model.Input.CityCode" maxlength="20" placeholder="e.g. CTY-001" />
+                        </div>
+                        <div class="form-group">
+                            <label>Name <span class="required">*</span></label>
+                            <input type="text" name="cityName" class="form-control"
+                                   value="@Model.Input.CityName" maxlength="150"
+                                   placeholder="e.g. Karachi, Lahore" />
+                        </div>
+                        <div class="form-group">
+                            <label>Alias</label>
+                            <input type="text" name="aliasName" class="form-control"
+                                   value="@Model.Input.AliasName" maxlength="100"
+                                   placeholder="Short name / abbreviation" />
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true"
+                                       @(Model.Input.IsActive ? "checked" : "") /> Active
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Input.CityID > 0 ? "Update" : "Save")
+                    </button>
+                    <a href="/CitySetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header space-between">
+                <h2>City List</h2>
+                <input type="text" id="txtSearch" class="form-control" style="width:220px"
+                       placeholder="Search…" onkeyup="searchTable(this.value)" />
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table" id="dataTable">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Code</th>
+                            <th>Name</th>
+                            <th>Alias</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="5">No records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Records)
+                            {
+                                <tr>
+                                    <td><code style="font-size:.75rem;background:#f1f5f9;padding:.1rem .4rem;border-radius:4px;">@item.CityCode</code></td>
+                                    <td>@item.CityName</td>
+                                    <td>@item.AliasName</td>
+                                    <td>
+                                        <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">
+                                            @(item.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/CitySetup?editId=@item.CityID">Edit</a>
+                                        <form method="post" action="/CitySetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.CityID" />
+                                            <button type="submit" class="btn-icon btn-delete"
+                                                    onclick="return confirm('Remove this city?')">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+    <script>
+        function searchTable(q) {
+            q = (q || '').toLowerCase();
+            document.querySelectorAll('#dataTable tbody tr').forEach(function (r) {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

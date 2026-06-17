@@ -1,0 +1,178 @@
+@page
+@model HRMS.Pages.DepartmentSetupModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.Id > 0 ? "Edit Department" : "Add Department")</h2>
+            </div>
+            <form method="post" action="/DepartmentSetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="itemId" value="@Model.Input.Id" />
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Division</label>
+                            <select name="divisionID" class="form-control">
+                                <option value="">-- Select Division --</option>
+                                @foreach (var division in Model.Divisions)
+                                {
+                                    if (Model.Input.DivisionID == division.Id)
+                                    {
+                                        <option value="@division.Id" selected>@division.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@division.Id">@division.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Wing</label>
+                            <select name="wingID" class="form-control">
+                                <option value="">-- Select Wing --</option>
+                                @foreach (var wing in Model.Wings)
+                                {
+                                    if (Model.Input.WingID == wing.Id)
+                                    {
+                                        <option value="@wing.Id" selected>@wing.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@wing.Id">@wing.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Business Segment</label>
+                            <select name="businessSegmentID" class="form-control">
+                                <option value="">-- Select Business Segment --</option>
+                                @foreach (var segment in Model.BusinessSegments)
+                                {
+                                    if (Model.Input.BusinessSegmentID == segment.Id)
+                                    {
+                                        <option value="@segment.Id" selected>@segment.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@segment.Id">@segment.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Business Unit</label>
+                            <select name="businessUnitID" class="form-control">
+                                <option value="">-- Select Business Unit --</option>
+                                @foreach (var unit in Model.BusinessUnits)
+                                {
+                                    if (Model.Input.BusinessUnitID == unit.Id)
+                                    {
+                                        <option value="@unit.Id" selected>@unit.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@unit.Id">@unit.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Department <span class="required">*</span></label>
+                            <input type="text" name="itemName" class="form-control" value="@Model.Input.Name" maxlength="100" />
+                        </div>
+                        <div class="form-group">
+                            <label>Alias</label>
+                            <input type="text" name="aliasName" class="form-control" value="@Model.Input.AliasName" maxlength="50" />
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true" @(Model.Input.IsActive ? "checked" : "") />
+                                Active
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.Input.Id > 0 ? "Update Department" : "Save Department")</button>
+                    <a href="/DepartmentSetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h2>Department List</h2>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Division</th>
+                            <th>Wing</th>
+                            <th>Business Segment</th>
+                            <th>Business Unit</th>
+                            <th>Department</th>
+                            <th>Alias</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="8">No records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Records)
+                            {
+                                <tr>
+                                    <td>@item.DivisionName</td>
+                                    <td>@item.WingName</td>
+                                    <td>@item.BusinessSegmentName</td>
+                                    <td>@item.BusinessUnitName</td>
+                                    <td>@item.Name</td>
+                                    <td>@item.AliasName</td>
+                                    <td><span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span></td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/DepartmentSetup?editId=@item.Id" title="Edit">Edit</a>
+                                        <form method="post" action="/DepartmentSetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.Id" />
+                                            <button type="submit" class="btn-icon btn-delete" title="Remove">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    @await Html.PartialAsync("_AppFooter")
+</body>
+</html>
+

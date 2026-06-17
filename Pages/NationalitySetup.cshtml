@@ -1,0 +1,93 @@
+﻿@page
+@model HRMS.Pages.NationalitySetupModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.Id > 0 ? "Edit Nationality" : "Add Nationality")</h2>
+            </div>
+            <form method="post" action="/NationalitySetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="itemId" value="@Model.Input.Id" />
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nationality <span class="required">*</span></label>
+                            <input type="text" name="itemName" class="form-control" value="@Model.Input.Name" maxlength="100" />
+                        </div>
+                        <div class="form-group">
+                            <label>Alias</label>
+                            <input type="text" name="aliasName" class="form-control" value="@Model.Input.AliasName" maxlength="50" />
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true" @(Model.Input.IsActive ? "checked" : "") />
+                                Active
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.Input.Id > 0 ? "Update Nationality" : "Save Nationality")</button>
+                    <a href="/NationalitySetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header"><h2>Nationality List</h2></div>
+            <div class="card-body table-responsive">
+                <table class="data-table">
+                    <thead class="grid-header"><tr><th>Nationality</th><th>Alias</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="4">No records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Records)
+                            {
+                                <tr>
+                                    <td>@item.Name</td>
+                                    <td>@item.AliasName</td>
+                                    <td><span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span></td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/NationalitySetup?editId=@item.Id" title="Edit">Edit</a>
+                                        <form method="post" action="/NationalitySetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.Id" />
+                                            <button type="submit" class="btn-icon btn-delete" title="Remove">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    @await Html.PartialAsync("_AppFooter")
+</body>
+</html>
+

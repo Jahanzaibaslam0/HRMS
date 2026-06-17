@@ -1,0 +1,178 @@
+@page
+@model HRMS.Pages.BenefitSetupModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+    <style>
+        .benefit-type-pill {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: .75rem;
+            font-weight: 600;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+    </style>
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <!-- ═══ Add / Edit Form ═══════════════════════════════════════ -->
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.BenefitID > 0 ? "Edit Benefit" : "Add New Benefit")</h2>
+            </div>
+            <form method="post" action="/BenefitSetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="benefitId" value="@Model.Input.BenefitID" />
+                <div class="card-body">
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label>Benefit Code</label>
+                            <input type="text" name="benefitCode" class="form-control"
+                                   value="@Model.Input.BenefitCode" maxlength="20"
+                                   placeholder="Auto-generated" readonly />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Benefit Name <span class="required">*</span></label>
+                            <input type="text" name="benefitName" class="form-control"
+                                   value="@Model.Input.BenefitName" maxlength="150"
+                                   placeholder="e.g. Medical Insurance" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Benefit Type</label>
+                            <select name="benefitType" class="form-control">
+                                <option value="">-- Select Type --</option>
+                                @foreach (var bt in HRMS.Pages.BenefitSetupModel.BenefitTypes)
+                                {
+                                    if (Model.Input.BenefitType == bt)
+                                    {
+                                        <option value="@bt" selected>@bt</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@bt">@bt</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" name="description" class="form-control"
+                                   value="@Model.Input.Description" maxlength="500"
+                                   placeholder="Optional description" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true"
+                                       @(Model.Input.IsActive ? "checked" : "") /> Active
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Input.BenefitID > 0 ? "Update Benefit" : "Save Benefit")
+                    </button>
+                    <a href="/BenefitSetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- ═══ Benefit List ═════════════════════════════════════════ -->
+        <div class="card mt-4">
+            <div class="card-header space-between">
+                <h2>Benefit List</h2>
+                <input type="text" id="txtSearch" class="form-control" style="width:200px"
+                       placeholder="Search…" onkeyup="searchTable(this.value)" />
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table" id="benefitTable">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>#</th>
+                            <th>Code</th>
+                            <th>Benefit Name</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="7">No benefits defined yet.</td></tr>
+                        }
+                        else
+                        {
+                            int n = 0;
+                            foreach (var item in Model.Records)
+                            {
+                                n++;
+                                <tr>
+                                    <td>@n</td>
+                                    <td><strong>@item.BenefitCode</strong></td>
+                                    <td>@item.BenefitName</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.BenefitType))
+                                        {
+                                            <span class="benefit-type-pill">@item.BenefitType</span>
+                                        }
+                                    </td>
+                                    <td>@item.Description</td>
+                                    <td>
+                                        <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">
+                                            @(item.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit"
+                                           href="/BenefitSetup?editId=@item.BenefitID" title="Edit">Edit</a>
+                                        <form method="post" action="/BenefitSetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.BenefitID" />
+                                            <button type="submit" class="btn-icon btn-delete"
+                                                    onclick="return confirm('Deactivate this benefit?')">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+    @await Html.PartialAsync("_AppFooter")
+    <script>
+        function searchTable(q) {
+            q = q.toLowerCase();
+            document.querySelectorAll('#benefitTable tbody tr').forEach(function(r) {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

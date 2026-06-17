@@ -1,0 +1,1061 @@
+@page
+@model HRMS.Pages.EmployeeMasterModel
+@{
+    Layout = null;
+    var pageTitle = Model.ShowForm
+        ? (Model.EditMode ? "Edit Employee" : "New Employee")
+        : "Employee Master";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS – @pageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+    <style>
+        /* ── List view ────────────────────────────────── */
+        .emp-list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: .75rem;
+        }
+        .emp-list-header .right-controls {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+        }
+        .stat-chips {
+            display: flex;
+            gap: .5rem;
+            margin-bottom: .75rem;
+            flex-wrap: wrap;
+        }
+        .stat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: .78rem;
+            font-weight: 600;
+        }
+        .chip-total   { background: #e0f2fe; color: #0369a1; }
+        .chip-active  { background: #dcfce7; color: #166534; }
+        .chip-inactive{ background: #fee2e2; color: #991b1b; }
+        /* ── Form view ────────────────────────────────── */
+        .form-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin-bottom: 1rem;
+            padding: .5rem .75rem;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+        .form-breadcrumb .crumb-sep { color: #9ca3af; }
+        .form-breadcrumb .crumb-current { font-weight: 600; color: #111827; }
+        .benefit-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: .75rem;
+            font-weight: 600;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+    </style>
+</head>
+<body>
+
+    @await Html.PartialAsync("_AppHeader", pageTitle)
+
+    <main class="container">
+
+        <!-- ═══════════ ALERT ════════════════════════════════════════════ -->
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType" id="alertBox">@Model.AlertMessage</div>
+        }
+        <div class="alert alert-error" id="clientNotice" style="display:none;"></div>
+
+        @if (!Model.ShowForm)
+        {
+            <!-- ════════════════════════════════════════════════════════════
+                 LIST VIEW
+                 ════════════════════════════════════════════════════════════ -->
+
+            int totalEmp    = Model.Employees.Count;
+            int activeEmp   = Model.Employees.Count(e => e.Status == "Active");
+            int inactiveEmp = totalEmp - activeEmp;
+
+            <!-- Stat chips -->
+            <div class="stat-chips">
+                <span class="stat-chip chip-total">Total: @totalEmp</span>
+                <span class="stat-chip chip-active">Active: @activeEmp</span>
+                <span class="stat-chip chip-inactive">Inactive: @inactiveEmp</span>
+            </div>
+
+        <div class="card">
+                <div class="card-header emp-list-header">
+                    <h2>Employee List</h2>
+                    <div class="right-controls">
+                        <input type="text" id="txtSearch" class="form-control"
+                               style="width:220px"
+                               placeholder="Search name / code / dept…"
+                               onkeyup="searchTable(this.value)" />
+                        <a href="/EmployeeMaster?newEmployee=true" class="btn btn-primary">
+                            + New Employee
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body table-responsive">
+                    <table class="data-table" id="empTable">
+                        <thead class="grid-header">
+                            <tr>
+                                <th>#</th>
+                                <th>Emp Code</th>
+                                <th>Full Name</th>
+                                <th>Legal Entity</th>
+                                <th>Department</th>
+                                <th>Employment Type</th>
+                                <th>Employment Status</th>
+                                <th>Designation</th>
+                                <th>Mobile</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Employees.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="13" class="empty-cell" style="text-align:center; padding:2rem; color:#6b7280;">
+                                        No employees found.
+                                        <br />
+                                        <a href="/EmployeeMaster?newEmployee=true" class="btn btn-primary" style="margin-top:.75rem;">
+                                            + Add First Employee
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                int rowNum = 0;
+                                foreach (var emp in Model.Employees)
+                                {
+                                    rowNum++;
+                                    <tr class="@(rowNum % 2 == 0 ? "grid-alt-row" : "grid-row")">
+                                        <td>@rowNum</td>
+                                        <td><strong>@emp.EmployeeCode</strong></td>
+                                        <td>@emp.FullName</td>
+                                        <td>@emp.LegalEntityName</td>
+                                        <td>@emp.DepartmentName</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(emp.EmploymentType))
+                                            {
+                                                <span class="badge badge-warning">@emp.EmploymentType</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(emp.EmploymentStatus))
+                                            {
+                                                <span class="badge badge-info">@emp.EmploymentStatus</span>
+                                            }
+                                        </td>
+                                        <td>@emp.Designation</td>
+                                        <td>@emp.Phone</td>
+                                        <td>@emp.Email</td>
+                                        <td>@emp.DateOfJoining?.ToString("dd MMM yyyy")</td>
+                                        <td>
+                                            <span class="badge @(emp.Status == "Active" ? "badge-success" : "badge-danger")">
+                                                @emp.Status
+                                            </span>
+                                        </td>
+                                        <td class="actions-col" style="white-space:nowrap;">
+                                            <a href="/EmployeeMaster?editId=@emp.EmployeeID"
+                                               class="btn btn-secondary" style="padding:3px 12px; font-size:.8rem;">
+                                                Edit
+                                            </a>
+                                            <form method="post" asp-page-handler="Delete" style="display:inline"
+                                                  onsubmit="return confirm('Delete this employee? This cannot be undone.');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="deleteId" value="@emp.EmployeeID" />
+                                                <button type="submit" class="btn btn-danger" style="padding:3px 10px; font-size:.8rem;">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card-footer">
+                    <span class="record-count">Total Records: @Model.Employees.Count</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- ════════════════════════════════════════════════════════════
+                 FORM VIEW
+                 ════════════════════════════════════════════════════════════ -->
+
+            <!-- Breadcrumb -->
+            <div class="form-breadcrumb">
+                <a href="/EmployeeMaster" class="btn btn-secondary" style="padding:4px 14px;">&#8592; Back to List</a>
+                <span class="crumb-sep">/</span>
+                <span class="crumb-current">@(Model.EditMode ? "Edit Employee" : "New Employee")</span>
+                @if (Model.EditMode && !string.IsNullOrEmpty(Model.Input.EmployeeCode))
+                {
+                    <span class="crumb-sep">–</span>
+                    <span style="color:#4b5563; font-size:.9rem;">@Model.Input.EmployeeCode &nbsp; @Model.Input.FirstName @Model.Input.LastName</span>
+                }
+            </div>
+
+            <!-- ── Main Employee Form ─────────────────────────────────── -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>@(Model.EditMode ? "Edit Employee Details" : "Add New Employee")</h2>
+            </div>
+
+            <form method="post" id="empForm" novalidate onsubmit="return prepareEmployeePayload();">
+                @Html.AntiForgeryToken()
+                    <input type="hidden" name="EmployeeID"      value="@Model.Input.EmployeeID" />
+                    <input type="hidden" name="EditMode"        value="@(Model.EditMode ? "true" : "false")" />
+                    <input type="hidden" name="ContactsJson"    id="ContactsJson" />
+                    <input type="hidden" name="AddressesJson"   id="AddressesJson" />
+                <input type="hidden" name="FamilyMembersJson" id="FamilyMembersJson" />
+                    <input type="hidden" name="BanksJson"       id="BanksJson" />
+
+                <div class="card-body">
+                    <div class="form-grid">
+
+                            <!-- Primary Identifier -->
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Primary Identifier</h3>
+                            </div>
+
+                        <div class="form-group">
+                                <label>Employee ID <span class="required">*</span></label>
+                            <input type="text" name="EmployeeCode" id="txtEmpCode" class="form-control"
+                                   value="@Model.Input.EmployeeCode" placeholder="e.g. EMP-001" maxlength="20" />
+                            <span class="field-error" id="errEmpCode"></span>
+                        </div>
+
+                            <div class="form-group">
+                                <label>Employee Status <span class="required">*</span></label>
+                                <select name="Status" id="ddlStatus" class="form-control">
+                                    @if (Model.Input.Status == "Active")
+                                    {
+                                        <option value="Active" selected>Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive" selected>Inactive</option>
+                                    }
+                                </select>
+                            </div>
+
+                        <div class="form-group">
+                            <label>First Name <span class="required">*</span></label>
+                            <input type="text" name="FirstName" id="txtFirstName" class="form-control"
+                                   value="@Model.Input.FirstName" placeholder="First name" maxlength="100" />
+                            <span class="field-error" id="errFirstName"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Last Name <span class="required">*</span></label>
+                            <input type="text" name="LastName" id="txtLastName" class="form-control"
+                                   value="@Model.Input.LastName" placeholder="Last name" maxlength="100" />
+                            <span class="field-error" id="errLastName"></span>
+                        </div>
+
+                            <div class="form-group">
+                                <label>Father's / Husband's Name</label>
+                                <input type="text" name="FathersHusbandsName" id="txtFatherHusbandName" class="form-control"
+                                       value="@Model.Input.FathersHusbandsName" maxlength="150"
+                                       placeholder="Father or husband name" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Display Name</label>
+                                <input type="text" name="DisplayName" id="txtDisplayName" class="form-control"
+                                       value="@Model.Input.DisplayName" maxlength="200"
+                                       placeholder="Name as shown on ID card / directory" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>National ID Number</label>
+                                <input type="text" name="NationalIDNumber" id="txtNationalID" class="form-control"
+                                       value="@Model.Input.NationalIDNumber" maxlength="50"
+                                       placeholder="e.g. CNIC / National ID" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" name="DateOfBirth" id="txtDOB" class="form-control"
+                                       value="@Model.Input.DateOfBirth" onchange="updateAgeField();" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Age</label>
+                                <input type="text" id="txtAge" class="form-control" readonly
+                                       value="@Model.Input.AgeDisplay" style="background:#f9fafb;" />
+                            </div>
+
+                        <div class="form-group">
+                            <label>Gender <span class="required">*</span></label>
+                            <select name="GenderID" id="ddlGender" class="form-control">
+                                <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Genders)
+                                    {
+                                        if (Model.Input.GenderID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                                <span class="field-error" id="errGender"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Language</label>
+                                <select name="LanguageID" id="ddlLanguage" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Languages)
+                                    {
+                                        if (Model.Input.LanguageID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Demographic Information -->
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Demographic Information</h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Nationality</label>
+                                <select name="NationalityID" id="ddlNationality" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Nationalities)
+                                    {
+                                        if (Model.Input.NationalityID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Domicile</label>
+                                <input type="text" name="Domicile" id="txtDomicile" class="form-control"
+                                       value="@Model.Input.Domicile" maxlength="150"
+                                       placeholder="e.g. Punjab, Sindh" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Religion</label>
+                                <select name="ReligionID" id="ddlReligion" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Religions)
+                                    {
+                                        if (Model.Input.ReligionID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Marital Status</label>
+                                <select name="MaritalStatus" id="ddlMaritalStatus" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var ms in new[] { "Single","Married","Divorced","Widowed","Separated" })
+                                    {
+                                        if (Model.Input.MaritalStatus == ms) { <option value="@ms" selected>@ms</option> }
+                                        else { <option value="@ms">@ms</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Blood Group</label>
+                                <select name="BloodGroupID" id="ddlBloodGroup" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.BloodGroups)
+                                    {
+                                        if (Model.Input.BloodGroupID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Organization Assignment -->
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Organization Assignment</h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Legal Entity</label>
+                                <select name="LegalEntityID" id="ddlLegalEntity" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.LegalEntities)
+                                    {
+                                        if (Model.Input.LegalEntityID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Business Unit</label>
+                                <select name="BusinessUnitID" id="ddlBusinessUnit" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.BusinessUnits)
+                                    {
+                                        if (Model.Input.BusinessUnitID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                                <label>Division</label>
+                                <select name="DivisionID" id="ddlDivision" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Divisions)
+                                    {
+                                        if (Model.Input.DivisionID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Department <span class="required">*</span></label>
+                            <select name="DepartmentID" id="ddlDepartment" class="form-control">
+                                <option value="">-- Select Department --</option>
+                                @foreach (var dept in Model.Departments)
+                                {
+                                    if (Model.Input.DepartmentID == dept.DepartmentID)
+                                        { <option value="@dept.DepartmentID" selected>@dept.DepartmentName</option> }
+                                        else
+                                        { <option value="@dept.DepartmentID">@dept.DepartmentName</option> }
+                                    }
+                                </select>
+                                <span class="field-error" id="errDepartment"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Designation <span class="required">*</span></label>
+                                <input type="text" name="Designation" id="txtDesignation" class="form-control"
+                                       value="@Model.Input.Designation" placeholder="e.g. Software Engineer" maxlength="100" />
+                                <span class="field-error" id="errDesignation"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Section / Team</label>
+                                <select name="SalesTeamID" id="ddlSalesTeam" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.SalesTeams)
+                                    {
+                                        if (Model.Input.SalesTeamID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Cost Center</label>
+                                <select name="CostCenterID" id="ddlCostCenter" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.CostCenters)
+                                    {
+                                        if (Model.Input.CostCenterID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Region</label>
+                                <select name="RegionID" id="ddlRegion" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Regions)
+                                    {
+                                        if (Model.Input.RegionID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                                <label>Worker Location</label>
+                                <select name="WorkerLocationID" id="ddlWorkerLocation" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.WorkerLocations)
+                                    {
+                                        if (Model.Input.WorkerLocationID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Location</label>
+                                <select name="LocationID" id="ddlLocation" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Locations)
+                                    {
+                                        if (Model.Input.LocationID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Extension</label>
+                                <select name="ExtensionID" id="ddlExtension" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Extensions)
+                                    {
+                                        if (Model.Input.ExtensionID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Employment Status</label>
+                                <select name="EmploymentStatusID" id="ddlEmploymentStatus" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.EmploymentStatuses)
+                                    {
+                                        if (Model.Input.EmploymentStatusID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Employment Type</label>
+                                <select name="EmploymentTypeID" id="ddlEmploymentType" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.EmploymentTypes)
+                                    {
+                                        if (Model.Input.EmploymentTypeID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                }
+                            </select>
+                        </div>
+
+                            <div class="form-group">
+                                <label>Job</label>
+                                <select name="JobID" id="ddlJob" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Jobs)
+                                    {
+                                        if (Model.Input.JobID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>City</label>
+                                <select name="CityID" id="ddlCity" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Cities)
+                                    {
+                                        if (Model.Input.CityID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Province</label>
+                                <select name="ProvinceID" id="ddlProvince" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Provinces)
+                                    {
+                                        if (Model.Input.ProvinceID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Sales Group</label>
+                                <select name="SalesGroupID" id="ddlSalesGroup" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.SalesGroups)
+                                    {
+                                        if (Model.Input.SalesGroupID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Grade</label>
+                                <select name="GradeID" id="ddlGrade" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.Grades)
+                                    {
+                                        if (Model.Input.GradeID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Basic Salary <span class="required">*</span></label>
+                                <input type="number" name="BasicSalary" id="txtSalary" class="form-control"
+                                       value="@Model.Input.BasicSalary" placeholder="0.00" min="0" step="0.01" />
+                                <span class="field-error" id="errSalary"></span>
+                            </div>
+
+                            <!-- Additional Employment -->
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Additional Employment</h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label>User</label>
+                                <select name="UserID" id="ddlUser" class="form-control">
+                                    <option value="">-- Select User --</option>
+                                    @foreach (var user in Model.Users)
+                                    {
+                                        if (Model.Input.UserID == user.Id)
+                                        {
+                                            <option value="@user.Id" selected>@user.Name</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@user.Id">@user.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Worker Category</label>
+                                <select name="WorkerCategoryID" id="ddlWorkerCategory" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.WorkerCategories)
+                                    {
+                                        if (Model.Input.WorkerCategoryID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Workforce Segment</label>
+                                <select name="WorkforceSegmentID" id="ddlWorkforceSegment" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var item in Model.WorkforceSegments)
+                                    {
+                                        if (Model.Input.WorkforceSegmentID == item.Id) { <option value="@item.Id" selected>@item.Name</option> }
+                                        else { <option value="@item.Id">@item.Name</option> }
+                                }
+                            </select>
+                        </div>
+
+                            <!-- Worker Joining & Tenure -->
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Worker Joining &amp; Tenure</h3>
+                        </div>
+
+                        <div class="form-group">
+                                <label>Joining Date <span class="required">*</span></label>
+                            <input type="date" name="DateOfJoining" id="txtDOJ" class="form-control"
+                                       value="@Model.Input.DateOfJoining"
+                                       onchange="updateTenureFields(); updateProbationEnd();" />
+                            <span class="field-error" id="errDOJ"></span>
+                        </div>
+
+                            <div class="form-group">
+                                <label>Employment Start Date</label>
+                                <input type="date" name="EmploymentStartDate" id="txtEmploymentStart" class="form-control"
+                                       value="@Model.Input.EmploymentStartDate"
+                                       onchange="updateTenureFields(); updateProbationEnd();" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Probation Period (Days)</label>
+                                <input type="number" name="ProbationPeriodDays" id="txtProbationDays" class="form-control"
+                                       value="@Model.Input.ProbationPeriodDays" min="0" step="1" placeholder="e.g. 90"
+                                       onchange="updateProbationEnd();" oninput="updateProbationEnd();" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Probation End Date</label>
+                                <input type="date" name="ProbationEndDate" id="txtProbationEnd" class="form-control"
+                                       value="@Model.Input.ProbationEndDate" />
+                                <small style="color:#6b7280;font-size:.78rem;">Auto-calculated from start date + probation days</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Confirmation Date</label>
+                                <input type="date" name="ConfirmationDate" id="txtConfirmationDate" class="form-control"
+                                       value="@Model.Input.ConfirmationDate" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Total Tenure</label>
+                                <input type="text" id="txtTotalTenure" class="form-control" readonly
+                                       value="@Model.Input.TotalTenureDisplay"
+                                       style="background:#f9fafb;" />
+                                <small style="color:#6b7280;font-size:.78rem;">From joining date to today</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Current Role Tenure</label>
+                                <input type="text" id="txtCurrentRoleTenure" class="form-control" readonly
+                                       value="@Model.Input.CurrentRoleTenureDisplay"
+                                       style="background:#f9fafb;" />
+                                <small style="color:#6b7280;font-size:.78rem;">From employment start date (or joining date)</small>
+                            </div>
+
+                            <!-- Compensation & Benefits -->
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Compensation &amp; Benefits</h3>
+                            </div>
+
+                            <!-- Benefit Entitlement -->
+                            <div class="form-group">
+                                <label>Benefit Entitlement</label>
+                                <select name="BenefitEntitlementID" id="ddlBenefitEntitlement" class="form-control"
+                                        onchange="loadBenefitPreview(this.value)">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var benefit in Model.BenefitEntitlements)
+                                    {
+                                        if (Model.Input.BenefitEntitlementID == benefit.Id)
+                                        { <option value="@benefit.Id" selected>@benefit.Name</option> }
+                                        else
+                                        { <option value="@benefit.Id">@benefit.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Benefits Preview (full-width) -->
+                            <div class="form-group full-width" id="benefitPreviewPanel" style="display:none;">
+                                <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:.75rem 1rem;">
+                                    <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#15803d;margin-bottom:.5rem;">
+                                        Benefits Included in this Package
+                                    </div>
+                                    <div id="benefitPreviewContent">
+                                        <span style="color:#6b7280;font-size:.875rem;">Loading…</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div><!-- /.form-grid -->
+
+                        <!-- ── Profile Tabs ──────────────────────────────── -->
+                    <div class="form-group full-width mt-4">
+                        <div class="profile-tabs">
+                            <div class="profile-tab-buttons">
+                                    <button type="button" class="profile-tab-btn active"
+                                            data-tab-target="contactTab"
+                                            onclick="switchProfileTab('contactTab', this)">Employee Contact</button>
+                                    <button type="button" class="profile-tab-btn"
+                                            data-tab-target="addressTab"
+                                            onclick="switchProfileTab('addressTab', this)">Address</button>
+                                    <button type="button" class="profile-tab-btn"
+                                            data-tab-target="familyTab"
+                                            onclick="switchProfileTab('familyTab', this)">Family Member</button>
+                                    <button type="button" class="profile-tab-btn"
+                                            data-tab-target="bankTab"
+                                            onclick="switchProfileTab('bankTab', this)">Bank Information</button>
+                            </div>
+
+                            <div class="profile-tab-panels">
+
+                                    <!-- Contact Tab -->
+                                <div class="profile-tab-panel active" id="contactTab">
+                                    <div class="card">
+                                        <div class="card-header space-between">
+                                            <h2>Employee Contact (Multiple)</h2>
+                                            <div>
+                                                <button type="button" class="btn btn-secondary" onclick="addContactRow()">Add Contact</button>
+                                                    <button type="button" class="btn btn-primary"   onclick="submitProfileSection('contacts')">Save Contact</button>
+                                                </div>
+                                        </div>
+                                        <div class="card-body table-responsive">
+                                            <table class="data-table" id="contactTable">
+                                                <thead class="grid-header">
+                                                    <tr>
+                                                            <th>Type</th><th>Name</th><th>Relationship</th>
+                                                            <th>Value</th><th>Primary</th><th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                            <span class="field-error" id="errContactRows"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                    <!-- Address Tab -->
+                                <div class="profile-tab-panel" id="addressTab">
+                                    <div class="card">
+                                        <div class="card-header space-between">
+                                            <h2>Address Information (Multiple)</h2>
+                                            <div>
+                                                <button type="button" class="btn btn-secondary" onclick="addAddressRow()">Add Address</button>
+                                                    <button type="button" class="btn btn-primary"   onclick="submitProfileSection('addresses')">Save Address</button>
+                                                </div>
+                                        </div>
+                                        <div class="card-body table-responsive">
+                                            <table class="data-table" id="addressTable">
+                                                <thead class="grid-header">
+                                                    <tr>
+                                                            <th>Type</th><th>Address</th><th>City</th>
+                                                            <th>Province/State</th><th>Postal Code</th>
+                                                            <th>Primary</th><th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                            <span class="field-error" id="errAddressRows"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                    <!-- Family Tab -->
+                                <div class="profile-tab-panel" id="familyTab">
+                                    <div class="card">
+                                        <div class="card-header space-between">
+                                            <h2>Family Members (Multiple)</h2>
+                                            <div>
+                                                <button type="button" class="btn btn-secondary" onclick="addFamilyRow()">Add Member</button>
+                                                    <button type="button" class="btn btn-primary"   onclick="submitProfileSection('family')">Save Family</button>
+                                                </div>
+                                        </div>
+                                        <div class="card-body table-responsive">
+                                            <table class="data-table" id="familyTable">
+                                                <thead class="grid-header">
+                                                    <tr>
+                                                            <th>Name</th><th>Relationship</th><th>Gender</th>
+                                                            <th>Date of Birth</th><th>Contact Number</th>
+                                                            <th>Dependent</th><th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                    <!-- Bank Tab -->
+                                <div class="profile-tab-panel" id="bankTab">
+                                    <div class="card">
+                                        <div class="card-header space-between">
+                                            <h2>Employee Bank Information (Multiple)</h2>
+                                            <div>
+                                                <button type="button" class="btn btn-secondary" onclick="addBankRow()">Add Bank</button>
+                                                    <button type="button" class="btn btn-primary"   onclick="submitProfileSection('banks')">Save Bank</button>
+                                                </div>
+                                        </div>
+                                        <div class="card-body table-responsive">
+                                            <table class="data-table" id="bankTable">
+                                                <thead class="grid-header">
+                                                    <tr>
+                                                            <th>Bank</th><th>Branch Code</th><th>Branch Name</th>
+                                                            <th>Account Title</th><th>IBAN No</th><th>Swift/BIC</th>
+                                                            <th>Account Type</th><th>Verification</th>
+                                                            <th>Primary</th><th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                            <span class="field-error" id="errBankRows"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                </div><!-- /.profile-tab-panels -->
+                            </div><!-- /.profile-tabs -->
+                        </div>
+
+                    </div><!-- /.card-body -->
+
+                    <div class="card-footer" style="display:flex;gap:.75rem;align-items:center;">
+                        <button type="submit" class="btn btn-primary">
+                            @(Model.EditMode ? "Update Employee" : "Save Employee")
+                        </button>
+                        <a href="/EmployeeMaster" class="btn btn-secondary">&#8592; Back to List</a>
+                </div>
+            </form>
+            </div><!-- /.card (main form) -->
+
+        }<!-- end ShowForm -->
+
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+
+    @if (Model.ShowForm)
+    {
+        <!-- Hidden save forms for tabs -->
+    <form method="post" id="contactSaveForm" action="/EmployeeMaster?handler=SaveContacts" style="display:none;">
+        @Html.AntiForgeryToken()
+            <input type="hidden" name="EmployeeID"   id="contactSaveEmployeeID" />
+        <input type="hidden" name="EmployeeCode" id="contactSaveEmployeeCode" />
+        <input type="hidden" name="ContactsJson" id="contactSaveJson" />
+    </form>
+    <form method="post" id="addressSaveForm" action="/EmployeeMaster?handler=SaveAddresses" style="display:none;">
+        @Html.AntiForgeryToken()
+            <input type="hidden" name="EmployeeID"    id="addressSaveEmployeeID" />
+            <input type="hidden" name="EmployeeCode"  id="addressSaveEmployeeCode" />
+        <input type="hidden" name="AddressesJson" id="addressSaveJson" />
+    </form>
+    <form method="post" id="familySaveForm" action="/EmployeeMaster?handler=SaveFamilyMembers" style="display:none;">
+        @Html.AntiForgeryToken()
+            <input type="hidden" name="EmployeeID"         id="familySaveEmployeeID" />
+            <input type="hidden" name="EmployeeCode"       id="familySaveEmployeeCode" />
+            <input type="hidden" name="FamilyMembersJson"  id="familySaveJson" />
+    </form>
+    <form method="post" id="bankSaveForm" action="/EmployeeMaster?handler=SaveBanks" style="display:none;">
+        @Html.AntiForgeryToken()
+            <input type="hidden" name="EmployeeID"   id="bankSaveEmployeeID" />
+        <input type="hidden" name="EmployeeCode" id="bankSaveEmployeeCode" />
+            <input type="hidden" name="BanksJson"    id="bankSaveJson" />
+    </form>
+
+        <script id="initialContactsData"  type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ContactRecords))</script>
+    <script id="initialAddressesData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AddressRecords))</script>
+        <script id="initialFamilyData"    type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.FamilyRecords))</script>
+        <script id="initialBanksData"     type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BankRecords))</script>
+        <script id="bankLookupData"       type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Banks))</script>
+    <script src="/js/app.js?v=202606101443"></script>
+
+        <script>
+            function formatTenureFromDate(dateStr) {
+                if (!dateStr) return '';
+                var start = new Date(dateStr + 'T00:00:00');
+                var end = new Date();
+                end.setHours(0, 0, 0, 0);
+                if (isNaN(start.getTime()) || start > end) return '';
+
+                var months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+                if (end.getDate() < start.getDate()) months--;
+                if (months < 0) return '';
+
+                var years = Math.floor(months / 12);
+                months = months % 12;
+                var parts = [];
+                if (years > 0) parts.push(years + ' yr' + (years === 1 ? '' : 's'));
+                if (months > 0) parts.push(months + ' mo' + (months === 1 ? '' : 's'));
+                if (parts.length === 0) {
+                    var days = Math.round((end - start) / (1000 * 60 * 60 * 24));
+                    parts.push(days + ' day' + (days === 1 ? '' : 's'));
+                }
+                return parts.join(', ');
+            }
+
+            function updateAgeField() {
+                var dob = document.getElementById('txtDOB')?.value;
+                var ageEl = document.getElementById('txtAge');
+                if (!ageEl) return;
+                if (!dob) { ageEl.value = ''; return; }
+                var birth = new Date(dob + 'T00:00:00');
+                var today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (isNaN(birth.getTime()) || birth > today) { ageEl.value = ''; return; }
+                var age = today.getFullYear() - birth.getFullYear();
+                var m = today.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+                ageEl.value = age >= 0 ? age + ' yr' + (age === 1 ? '' : 's') : '';
+            }
+
+            function updateTenureFields() {
+                var joining = document.getElementById('txtDOJ')?.value || '';
+                var employmentStart = document.getElementById('txtEmploymentStart')?.value || '';
+                var totalEl = document.getElementById('txtTotalTenure');
+                var roleEl = document.getElementById('txtCurrentRoleTenure');
+                if (totalEl) totalEl.value = formatTenureFromDate(joining);
+                if (roleEl) roleEl.value = formatTenureFromDate(employmentStart || joining);
+            }
+
+            function updateProbationEnd() {
+                var start = document.getElementById('txtEmploymentStart')?.value
+                         || document.getElementById('txtDOJ')?.value;
+                var daysVal = document.getElementById('txtProbationDays')?.value;
+                var endEl = document.getElementById('txtProbationEnd');
+                if (!start || !daysVal || !endEl) return;
+                var days = parseInt(daysVal, 10);
+                if (isNaN(days) || days <= 0) return;
+                var d = new Date(start + 'T00:00:00');
+                d.setDate(d.getDate() + days);
+                endEl.value = d.toISOString().split('T')[0];
+            }
+
+            updateAgeField();
+            updateTenureFields();
+
+            // Benefit Entitlement live preview
+            function loadBenefitPreview(entitlementId) {
+                var panel   = document.getElementById('benefitPreviewPanel');
+                var content = document.getElementById('benefitPreviewContent');
+                if (!entitlementId) { panel.style.display = 'none'; return; }
+                panel.style.display = 'block';
+                content.innerHTML = '<span style="color:#6b7280;font-size:.875rem;">Loading…</span>';
+                fetch('/BenefitEntitlementSetup?handler=GetBenefits&entitlementId=' + entitlementId)
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (!data || data.length === 0) {
+                            content.innerHTML = '<span style="color:#6b7280;font-size:.875rem;">No benefits configured for this entitlement yet.</span>';
+                            return;
+                        }
+                        var html = '<div style="display:flex;flex-wrap:wrap;gap:.4rem;">';
+                        data.forEach(function(b) {
+                            var type = b.benefitType ? ' <span style="font-size:.7rem;opacity:.75;">(' + b.benefitType + ')</span>' : '';
+                            var tip  = b.description ? ' title="' + b.description.replace(/"/g,'&quot;') + '"' : '';
+                            html += '<span' + tip + ' style="display:inline-flex;align-items:center;gap:.25rem;background:#dcfce7;color:#166534;border:1px solid #86efac;border-radius:12px;padding:3px 10px;font-size:.82rem;font-weight:500;">' +
+                                    b.benefitName + type + '</span>';
+                        });
+                        html += '</div>';
+                        content.innerHTML = html;
+                    })
+                    .catch(function() {
+                        content.innerHTML = '<span style="color:#dc2626;font-size:.875rem;">Could not load benefits.</span>';
+                    });
+            }
+            // Auto-load if entitlement already selected on page load
+            (function() {
+                var sel = document.getElementById('ddlBenefitEntitlement');
+                if (sel && sel.value) loadBenefitPreview(sel.value);
+            }());
+        </script>
+    }
+    else
+    {
+        <!-- Simple search for list view only -->
+        <script>
+            function searchTable(q) {
+                q = q.toLowerCase();
+                var rows = document.querySelectorAll('#empTable tbody tr');
+                rows.forEach(function(row) {
+                    var text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(q) ? '' : 'none';
+                });
+            }
+        </script>
+    }
+
+</body>
+</html>

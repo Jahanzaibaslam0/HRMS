@@ -1,0 +1,169 @@
+@page
+@model HRMS.Pages.SalesTeamSetupModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.SalesTeamID > 0 ? "Edit Sales Team" : "Add Sales Team")</h2>
+            </div>
+            <form method="post" action="/SalesTeamSetup?handler=Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="salesTeamID" value="@Model.Input.SalesTeamID" />
+                <div class="card-body">
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label>Team Code <span class="required">*</span></label>
+                            <input type="text" name="salesTeamCode" class="form-control"
+                                   value="@Model.Input.SalesTeamCode" maxlength="20"
+                                   placeholder="e.g. ST-001" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Team Name <span class="required">*</span></label>
+                            <input type="text" name="salesTeamName" class="form-control"
+                                   value="@Model.Input.SalesTeamName" maxlength="150"
+                                   placeholder="e.g. North Region Sales" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Division</label>
+                            <select name="divisionID" class="form-control">
+                                <option value="">-- Select Division --</option>
+                                @foreach (var div in Model.Divisions)
+                                {
+                                    if (Model.Input.DivisionID == div.Id)
+                                    {
+                                        <option value="@div.Id" selected>@div.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@div.Id">@div.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Alias Name</label>
+                            <input type="text" name="aliasName" class="form-control"
+                                   value="@Model.Input.AliasName" maxlength="100"
+                                   placeholder="Short name / abbreviation" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true"
+                                       @(Model.Input.IsActive ? "checked" : "") />
+                                Active
+                            </label>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Description</label>
+                            <textarea name="description" class="form-control"
+                                      maxlength="500" rows="3"
+                                      placeholder="Brief description of this sales team...">@Model.Input.Description</textarea>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.Input.SalesTeamID > 0 ? "Update Sales Team" : "Save Sales Team")
+                    </button>
+                    <a href="/SalesTeamSetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header space-between">
+                <h2>Sales Team List</h2>
+                <div class="search-box">
+                    <input type="text" id="stSearch" class="form-control"
+                           placeholder="Search sales teams..."
+                           onkeyup="searchTable(this.value)" />
+                </div>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table" id="stTable">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Code</th>
+                            <th>Team Name</th>
+                            <th>Division</th>
+                            <th>Alias Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="7">No sales team records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Records)
+                            {
+                                <tr>
+                                    <td><code style="font-size:.75rem;background:#f1f5f9;padding:.1rem .4rem;border-radius:4px;">@item.SalesTeamCode</code></td>
+                                    <td>@item.SalesTeamName</td>
+                                    <td>@item.DivisionName</td>
+                                    <td>@item.AliasName</td>
+                                    <td style="max-width:220px;white-space:normal;">@item.Description</td>
+                                    <td>
+                                        <span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">
+                                            @(item.IsActive ? "Active" : "Inactive")
+                                        </span>
+                                    </td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/SalesTeamSetup?editId=@item.SalesTeamID" title="Edit">Edit</a>
+                                        <form method="post" action="/SalesTeamSetup?handler=Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.SalesTeamID" />
+                                            <button type="submit" class="btn-icon btn-delete" title="Remove"
+                                                    onclick="return confirm('Remove this sales team?')">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+    <script>
+        function searchTable(keyword) {
+            var kw = (keyword || '').toLowerCase();
+            document.querySelectorAll('#stTable tbody tr').forEach(function (row) {
+                row.style.display = row.textContent.toLowerCase().indexOf(kw) >= 0 ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

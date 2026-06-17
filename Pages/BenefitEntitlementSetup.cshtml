@@ -1,0 +1,276 @@
+@page
+@model HRMS.Pages.BenefitEntitlementSetupModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=3" />
+    <style>
+        .benefit-type-pill {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 12px;
+            font-size: .73rem;
+            font-weight: 600;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+        .manage-section {
+            border-left: 4px solid #c99a2e;
+            background: #fffbf0;
+        }
+        .section-label {
+            font-size: .78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #6b7280;
+            margin-bottom: .4rem;
+        }
+        .linked-benefit-row {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            padding: .5rem .75rem;
+            border: 1px solid #d1fae5;
+            border-radius: 6px;
+            background: #f0fdf4;
+            margin-bottom: .4rem;
+        }
+        .linked-benefit-row .name { font-weight: 600; color: #065f46; flex: 1; }
+        .linked-benefit-row .code { font-size: .78rem; color: #6b7280; }
+        .count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: #0369a1;
+            color: #fff;
+            font-size: .72rem;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <!-- ═══ CARD 1 · Entitlement Form ══════════════════════════════ -->
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.EntitlementInput.Id > 0 ? "Edit Benefit Entitlement" : "Add Benefit Entitlement")</h2>
+            </div>
+            <form method="post" action="/BenefitEntitlementSetup?handler=SaveEntitlement">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="itemId"   value="@Model.EntitlementInput.Id" />
+                <input type="hidden" name="manageId" value="@Model.ManageEntitlementID" />
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Entitlement Name <span class="required">*</span></label>
+                            <input type="text" name="itemName" class="form-control"
+                                   value="@Model.EntitlementInput.Name" maxlength="100"
+                                   placeholder="e.g. Executive Package" />
+                        </div>
+                        <div class="form-group">
+                            <label>Alias</label>
+                            <input type="text" name="aliasName" class="form-control"
+                                   value="@Model.EntitlementInput.AliasName" maxlength="50" />
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true"
+                                       @(Model.EntitlementInput.IsActive ? "checked" : "") /> Active
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        @(Model.EntitlementInput.Id > 0 ? "Update Entitlement" : "Save Entitlement")
+                    </button>
+                    <a href="/BenefitEntitlementSetup" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- ═══ CARD 2 · Benefits Management (shown when manageId > 0) ═ -->
+        @if (Model.ManageEntitlementID > 0)
+        {
+            <div class="card mt-4 manage-section">
+                <div class="card-header space-between">
+                    <div>
+                        <div class="section-label">Managing Benefits for</div>
+                        <h2>@Model.ManageEntitlementName</h2>
+                    </div>
+                    <a href="/BenefitEntitlementSetup" class="btn btn-secondary">&#8592; Back to List</a>
+                </div>
+
+                <div class="card-body">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
+
+                        <!-- Left: Add benefit from lookup -->
+                        <div>
+                            <p class="section-label">Add Benefit from Lookup</p>
+                            @if (Model.AvailableBenefits.Count == 0)
+                            {
+                                <div style="padding:.75rem 1rem; background:#f3f4f6; border-radius:6px; color:#6b7280; font-size:.875rem;">
+                                    All active benefits are already added to this entitlement.
+                                    <br />
+                                    <a href="/BenefitSetup" style="color:#0369a1; font-weight:600;">Create more benefits →</a>
+                                </div>
+                            }
+                            else
+                            {
+                                <form method="post" action="/BenefitEntitlementSetup?handler=LinkBenefit"
+                                      style="display:flex; gap:.5rem; align-items:flex-end;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="benefitEntitlementID" value="@Model.ManageEntitlementID" />
+                                    <div style="flex:1;">
+                                        <select name="benefitID" class="form-control">
+                                            <option value="">-- Select a Benefit --</option>
+                                            @foreach (var b in Model.AvailableBenefits)
+                                            {
+                                                var label = b.BenefitCode + " – " + b.BenefitName;
+                                                if (!string.IsNullOrEmpty(b.BenefitType))
+                                                    label += " (" + b.BenefitType + ")";
+                                                <option value="@b.BenefitID">@label</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">+ Add</button>
+                                </form>
+                                <p style="font-size:.78rem; color:#6b7280; margin-top:.4rem;">
+                                    @Model.AvailableBenefits.Count benefit(s) available to add.
+                                    <a href="/BenefitSetup" style="color:#0369a1;">Manage Benefits →</a>
+                                </p>
+                            }
+                        </div>
+
+                        <!-- Right: Currently linked benefits -->
+                        <div>
+                            <p class="section-label">
+                                Linked Benefits
+                                <span class="count-badge" style="margin-left:.35rem;">@Model.LinkedBenefits.Count</span>
+                            </p>
+
+                            @if (Model.LinkedBenefits.Count == 0)
+                            {
+                                <div style="padding:.75rem 1rem; background:#f9fafb; border:1px dashed #d1d5db; border-radius:6px; color:#9ca3af; font-size:.875rem; text-align:center;">
+                                    No benefits linked yet. Select from the lookup on the left.
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="max-height:320px; overflow-y:auto;">
+                                    @foreach (var b in Model.LinkedBenefits)
+                                    {
+                                        <div class="linked-benefit-row">
+                                            <div>
+                                                <div class="name">@b.BenefitName</div>
+                                                <div class="code">
+                                                    @if (!string.IsNullOrEmpty(b.BenefitCode))
+                                                    {
+                                                        <span>@b.BenefitCode</span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(b.BenefitType))
+                                                    {
+                                                        <span class="benefit-type-pill" style="margin-left:.3rem;">@b.BenefitType</span>
+                                                    }
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(b.Description))
+                                                {
+                                                    <div style="font-size:.78rem; color:#6b7280; margin-top:2px;">@b.Description</div>
+                                                }
+                                            </div>
+                                            <form method="post" action="/BenefitEntitlementSetup?handler=UnlinkBenefit" style="margin-left:auto;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="detailID"             value="@b.DetailID" />
+                                                <input type="hidden" name="benefitEntitlementID" value="@Model.ManageEntitlementID" />
+                                                <button type="submit" class="btn-icon btn-delete" title="Remove"
+                                                        onclick="return confirm('Remove this benefit from the entitlement?')">×</button>
+                                            </form>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                    </div><!-- /grid -->
+                </div><!-- /card-body -->
+            </div><!-- /manage card -->
+        }
+
+        <!-- ═══ CARD 3 · Entitlement List ══════════════════════════════ -->
+        <div class="card mt-4">
+            <div class="card-header"><h2>Benefit Entitlement List</h2></div>
+            <div class="card-body table-responsive">
+                <table class="data-table">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Entitlement Name</th>
+                            <th>Alias</th>
+                            <th>Benefits</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Entitlements.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="5">No records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Entitlements)
+                            {
+                                bool isManaging = Model.ManageEntitlementID == item.Id;
+                                int  count      = Model.EntitlementBenefitCounts.TryGetValue(item.Id, out var c) ? c : 0;
+                                <tr @(isManaging ? "style=\"background:#fffbf0;\"" : "")>
+                                    <td><strong>@item.Name</strong></td>
+                                    <td>@item.AliasName</td>
+                                    <td>
+                                        <a href="/BenefitEntitlementSetup?manageId=@item.Id"
+                                           class="btn btn-secondary" style="padding:2px 10px;font-size:.8rem;">
+                                            Manage
+                                            @if (count > 0)
+                                            {
+                                                <span class="count-badge" style="margin-left:.3rem;">@count</span>
+                                            }
+                                        </a>
+                                    </td>
+                                    <td><span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span></td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit"
+                                           href="/BenefitEntitlementSetup?editId=@item.Id&manageId=@item.Id"
+                                           title="Edit">Edit</a>
+                                        <form method="post" action="/BenefitEntitlementSetup?handler=DeleteEntitlement" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.Id" />
+                                            <button type="submit" class="btn-icon btn-delete"
+                                                    onclick="return confirm('Remove this entitlement?')">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+    @await Html.PartialAsync("_AppFooter")
+</body>
+</html>
