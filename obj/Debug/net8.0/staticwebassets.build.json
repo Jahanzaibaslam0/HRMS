@@ -1,0 +1,58 @@
+{
+  "Version": 1,
+  "Hash": "ygsaU/YIDDbDegw5CJeWA/Vy26PkAQwAJBgJGlP4KHg=",
+  "Source": "HRMS",
+  "BasePath": "_content/HRMS",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "HRMS\\wwwroot",
+      "Source": "HRMS",
+      "ContentRoot": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\",
+      "BasePath": "_content/HRMS",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\css\\style.css",
+      "SourceId": "HRMS",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\",
+      "BasePath": "_content/HRMS",
+      "RelativePath": "css/style.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\css\\style.css"
+    },
+    {
+      "Identity": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\js\\app.js",
+      "SourceId": "HRMS",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\",
+      "BasePath": "_content/HRMS",
+      "RelativePath": "js/app.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\app.js"
+    }
+  ]
+}

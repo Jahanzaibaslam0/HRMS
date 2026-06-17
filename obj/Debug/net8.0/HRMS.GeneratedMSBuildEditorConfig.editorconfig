@@ -1,0 +1,195 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = HRMS
+build_property.RootNamespace = HRMS
+build_property.ProjectDir = C:\Users\jahanzaib.aslam.AIBG\HRMS\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\Users\jahanzaib.aslam.AIBG\HRMS
+build_property._RazorSourceGeneratorDebug = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/BankSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQmFua1NldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/BenefitEntitlementSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQmVuZWZpdEVudGl0bGVtZW50U2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/BenefitSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQmVuZWZpdFNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/BloodGroupSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQmxvb2RHcm91cFNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/BusinessSegmentSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQnVzaW5lc3NTZWdtZW50U2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/BusinessUnitSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQnVzaW5lc3NVbml0U2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/CitySetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2l0eVNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/CostCenterSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29zdENlbnRlclNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/DepartmentSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGVwYXJ0bWVudFNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/DesignationLevelSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGVzaWduYXRpb25MZXZlbFNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/DivisionSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGl2aXNpb25TZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/EmployeeMaster.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRW1wbG95ZWVNYXN0ZXIuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/EmployeeReport.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRW1wbG95ZWVSZXBvcnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/EmploymentStatusSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRW1wbG95bWVudFN0YXR1c1NldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/EmploymentTypeSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRW1wbG95bWVudFR5cGVTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/ExpenseCategorySetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhwZW5zZUNhdGVnb3J5U2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/ExtensionSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXh0ZW5zaW9uU2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/GenderSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcR2VuZGVyU2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/GradeSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcR3JhZGVTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/JobSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSm9iU2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/LanguageSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTGFuZ3VhZ2VTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/LegalEntitySetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTGVnYWxFbnRpdHlTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/LocationSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9jYXRpb25TZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW4uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/NationalitySetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTmF0aW9uYWxpdHlTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/ProvinceSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvdmluY2VTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/RegionSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVnaW9uU2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/ReligionSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVsaWdpb25TZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/SalesGroupSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2FsZXNHcm91cFNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/SalesTeamSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2FsZXNUZWFtU2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/SkillSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2tpbGxTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/UnitSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVW5pdFNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/UserRightsSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXNlclJpZ2h0c1NldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/UserSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVXNlclNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/WingSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2luZ1NldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/WorkArrangementSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV29ya0FycmFuZ2VtZW50U2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/WorkerCategorySetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV29ya2VyQ2F0ZWdvcnlTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/WorkerLocationSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV29ya2VyTG9jYXRpb25TZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/WorkforceSegmentSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV29ya2ZvcmNlU2VnbWVudFNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/WorkLocationTypeSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV29ya0xvY2F0aW9uVHlwZVNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/_AppFooter.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX0FwcEZvb3Rlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/_AppHeader.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX0FwcEhlYWRlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/_LookupSetupPage.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX0xvb2t1cFNldHVwUGFnZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
