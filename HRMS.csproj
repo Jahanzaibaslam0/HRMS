@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>HRMS</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+  </ItemGroup>
+
+  <!-- Exclude legacy Web Forms files (not supported on .NET 8) -->
+  <ItemGroup>
+    <Compile Remove="EmployeeMaster.aspx.cs" />
+    <Content Remove="EmployeeMaster.aspx" />
+    <Content Remove="Web.config" />
+  </ItemGroup>
+
+</Project>
