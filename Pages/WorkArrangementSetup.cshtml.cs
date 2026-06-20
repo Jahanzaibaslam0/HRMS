@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -16,10 +17,12 @@ public class WorkArrangementRecord
 public class WorkArrangementSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public WorkArrangementSetupModel(IConfiguration config)
+    public WorkArrangementSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Work Arrangement Setup";
@@ -69,9 +72,11 @@ public class WorkArrangementSetupModel : PageModel
                         WorkArrangementName = @Name,
                         AliasName           = @AliasName,
                         IsActive            = @IsActive,
-                        ModifiedOn          = GETDATE()
+                        ModifiedOn          = GETDATE(),
+                        ModifiedByUserID    = @ModifiedByUserID
                     WHERE WorkArrangementID = @ID;", conn);
                 AddParams(cmd, workArrangementID, workArrangementCode, workArrangementName, aliasName, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Work Arrangement updated successfully.";
             }
@@ -79,10 +84,11 @@ public class WorkArrangementSetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblWorkArrangement
-                        (WorkArrangementCode, WorkArrangementName, AliasName, IsActive)
+                        (WorkArrangementCode, WorkArrangementName, AliasName, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
-                        (@Code, @Name, @AliasName, @IsActive);", conn);
+                        (@Code, @Name, @AliasName, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, workArrangementCode, workArrangementName, aliasName, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Work Arrangement added successfully.";
             }
@@ -111,9 +117,10 @@ public class WorkArrangementSetupModel : PageModel
         {
             using var conn = new SqlConnection(_conn);
             using var cmd = new SqlCommand(@"
-                UPDATE tblWorkArrangement SET IsActive = 0, ModifiedOn = GETDATE()
+                UPDATE tblWorkArrangement SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE WorkArrangementID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 

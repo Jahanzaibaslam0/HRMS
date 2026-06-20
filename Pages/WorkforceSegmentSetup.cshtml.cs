@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class WorkforceSegmentSetupModel : LookupSetupPageModel
 {
-    public WorkforceSegmentSetupModel(IConfiguration config) : base(config) { }
+    public WorkforceSegmentSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName  => "tblWorkforceSegment";
     protected override string IdColumn   => "WorkforceSegmentID";

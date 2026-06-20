@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -17,10 +18,12 @@ public class WorkerCategoryRecord
 public class WorkerCategorySetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public WorkerCategorySetupModel(IConfiguration config)
+    public WorkerCategorySetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Worker Category Setup";
@@ -73,10 +76,12 @@ public class WorkerCategorySetupModel : PageModel
                         AliasName          = @AliasName,
                         Description        = @Description,
                         IsActive           = @IsActive,
-                        ModifiedOn         = GETDATE()
+                        ModifiedOn         = GETDATE(),
+                        ModifiedByUserID   = @ModifiedByUserID
                     WHERE WorkerCategoryID = @ID;", conn);
                 AddParams(cmd, workerCategoryID, workerCategoryCode, workerCategoryName,
                     aliasName, description, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Worker Category updated successfully.";
             }
@@ -84,11 +89,12 @@ public class WorkerCategorySetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblWorkerCategory
-                        (WorkerCategoryCode, WorkerCategoryName, AliasName, Description, IsActive)
+                        (WorkerCategoryCode, WorkerCategoryName, AliasName, Description, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
-                        (@Code, @Name, @AliasName, @Description, @IsActive);", conn);
+                        (@Code, @Name, @AliasName, @Description, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, workerCategoryCode, workerCategoryName,
                     aliasName, description, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Worker Category added successfully.";
             }
@@ -116,9 +122,10 @@ public class WorkerCategorySetupModel : PageModel
             using var conn = new SqlConnection(_conn);
             using var cmd = new SqlCommand(@"
                 UPDATE tblWorkerCategory
-                SET IsActive = 0, ModifiedOn = GETDATE()
+                SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE WorkerCategoryID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 

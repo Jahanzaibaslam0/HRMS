@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -21,6 +22,7 @@ public class SkillRecord
 public class SkillSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
     public static readonly List<string> FieldTypes = new()
     {
@@ -37,9 +39,10 @@ public class SkillSetupModel : PageModel
         "Mandatory", "Recommended", "Optional"
     };
 
-    public SkillSetupModel(IConfiguration config)
+    public SkillSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Skill Setup";
@@ -96,10 +99,12 @@ public class SkillSetupModel : PageModel
                         RoleCoverage = @RoleCoverage,
                         EmployeeNeed = @EmployeeNeed,
                         IsActive     = @IsActive,
-                        ModifiedOn   = GETDATE()
+                        ModifiedOn   = GETDATE(),
+                        ModifiedByUserID = @ModifiedByUserID
                     WHERE SkillID = @SkillID;", conn);
                 AddParameters(cmd, skillID, skillCode, skillName, fieldType, defaultTier,
                     description, escoAnchor, roleCoverage, employeeNeed, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Skill updated successfully.";
             }
@@ -111,12 +116,13 @@ public class SkillSetupModel : PageModel
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblSkill
                         (SkillCode, SkillName, FieldType, DefaultTier, Description,
-                         ESCOAnchor, RoleCoverage, EmployeeNeed, IsActive)
+                         ESCOAnchor, RoleCoverage, EmployeeNeed, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
                         (@SkillCode, @SkillName, @FieldType, @DefaultTier, @Description,
-                         @ESCOAnchor, @RoleCoverage, @EmployeeNeed, @IsActive);", conn);
+                         @ESCOAnchor, @RoleCoverage, @EmployeeNeed, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParameters(cmd, 0, code, skillName, fieldType, defaultTier,
                     description, escoAnchor, roleCoverage, employeeNeed, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Skill added successfully.";
             }
@@ -144,9 +150,10 @@ public class SkillSetupModel : PageModel
             using var conn = new SqlConnection(_conn);
             using var cmd = new SqlCommand(@"
                 UPDATE tblSkill
-                SET IsActive = 0, ModifiedOn = GETDATE()
+                SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE SkillID = @SkillID;", conn);
             cmd.Parameters.AddWithValue("@SkillID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 

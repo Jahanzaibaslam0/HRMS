@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class WingSetupModel : LookupSetupPageModel
 {
-    public WingSetupModel(IConfiguration config) : base(config) { }
+    public WingSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblWing";
     protected override string IdColumn => "WingID";

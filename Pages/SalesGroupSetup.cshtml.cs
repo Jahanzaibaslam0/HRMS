@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -16,10 +17,12 @@ public class SalesGroupRecord
 public class SalesGroupSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public SalesGroupSetupModel(IConfiguration config)
+    public SalesGroupSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Sales Group Setup";
@@ -62,18 +65,20 @@ public class SalesGroupSetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     UPDATE tblSalesGroup SET SalesGroupCode = @Code, SalesGroupName = @Name, AliasName = @AliasName,
-                        IsActive = @IsActive, ModifiedOn = GETDATE()
+                        IsActive = @IsActive, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                     WHERE SalesGroupID = @ID;", conn);
                 AddParams(cmd, salesGroupID, salesGroupCode, salesGroupName, aliasName, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Sales Group updated successfully.";
             }
             else
             {
                 using var cmd = new SqlCommand(@"
-                    INSERT INTO tblSalesGroup (SalesGroupCode, SalesGroupName, AliasName, IsActive)
-                    VALUES (@Code, @Name, @AliasName, @IsActive);", conn);
+                    INSERT INTO tblSalesGroup (SalesGroupCode, SalesGroupName, AliasName, IsActive, CreatedOn, CreatedByUserID)
+                    VALUES (@Code, @Name, @AliasName, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, salesGroupCode, salesGroupName, aliasName, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Sales Group added successfully.";
             }
@@ -99,8 +104,9 @@ public class SalesGroupSetupModel : PageModel
         try
         {
             using var conn = new SqlConnection(_conn);
-            using var cmd = new SqlCommand(@"UPDATE tblSalesGroup SET IsActive = 0, ModifiedOn = GETDATE() WHERE SalesGroupID = @ID;", conn);
+            using var cmd = new SqlCommand(@"UPDATE tblSalesGroup SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID WHERE SalesGroupID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
             TempData["Alert"] = "Sales Group removed successfully.";

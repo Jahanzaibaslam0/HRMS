@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -16,10 +17,12 @@ public class WorkLocationTypeRecord
 public class WorkLocationTypeSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public WorkLocationTypeSetupModel(IConfiguration config)
+    public WorkLocationTypeSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Work Location Type Setup";
@@ -69,9 +72,11 @@ public class WorkLocationTypeSetupModel : PageModel
                         WorkLocationTypeName = @Name,
                         AliasName            = @AliasName,
                         IsActive             = @IsActive,
-                        ModifiedOn           = GETDATE()
+                        ModifiedOn           = GETDATE(),
+                        ModifiedByUserID     = @ModifiedByUserID
                     WHERE WorkLocationTypeID = @ID;", conn);
                 AddParams(cmd, workLocationTypeID, workLocationTypeCode, workLocationTypeName, aliasName, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Work Location Type updated successfully.";
             }
@@ -79,10 +84,11 @@ public class WorkLocationTypeSetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblWorkLocationType
-                        (WorkLocationTypeCode, WorkLocationTypeName, AliasName, IsActive)
+                        (WorkLocationTypeCode, WorkLocationTypeName, AliasName, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
-                        (@Code, @Name, @AliasName, @IsActive);", conn);
+                        (@Code, @Name, @AliasName, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, workLocationTypeCode, workLocationTypeName, aliasName, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Work Location Type added successfully.";
             }
@@ -111,9 +117,10 @@ public class WorkLocationTypeSetupModel : PageModel
         {
             using var conn = new SqlConnection(_conn);
             using var cmd = new SqlCommand(@"
-                UPDATE tblWorkLocationType SET IsActive = 0, ModifiedOn = GETDATE()
+                UPDATE tblWorkLocationType SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE WorkLocationTypeID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 

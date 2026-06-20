@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -19,10 +20,12 @@ public class SalesTeamRecord
 public class SalesTeamSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public SalesTeamSetupModel(IConfiguration config)
+    public SalesTeamSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Sales Team Setup";
@@ -79,9 +82,11 @@ public class SalesTeamSetupModel : PageModel
                         AliasName     = @AliasName,
                         Description   = @Description,
                         IsActive      = @IsActive,
-                        ModifiedOn    = GETDATE()
+                        ModifiedOn    = GETDATE(),
+                        ModifiedByUserID = @ModifiedByUserID
                     WHERE SalesTeamID = @ID;", conn);
                 AddParams(cmd, salesTeamID, salesTeamCode, salesTeamName, divisionID, aliasName, description, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Sales Team updated successfully.";
             }
@@ -89,10 +94,11 @@ public class SalesTeamSetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblSalesTeam
-                        (SalesTeamCode, SalesTeamName, DivisionID, AliasName, Description, IsActive)
+                        (SalesTeamCode, SalesTeamName, DivisionID, AliasName, Description, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
-                        (@Code, @Name, @DivisionID, @AliasName, @Description, @IsActive);", conn);
+                        (@Code, @Name, @DivisionID, @AliasName, @Description, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, salesTeamCode, salesTeamName, divisionID, aliasName, description, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Sales Team added successfully.";
             }
@@ -120,9 +126,10 @@ public class SalesTeamSetupModel : PageModel
             using var conn = new SqlConnection(_conn);
             using var cmd = new SqlCommand(@"
                 UPDATE tblSalesTeam
-                SET IsActive = 0, ModifiedOn = GETDATE()
+                SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE SalesTeamID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 

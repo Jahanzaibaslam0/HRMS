@@ -124,6 +124,7 @@ public class UserSetupModel : PageModel
                 cmd.Parameters.AddWithValue("@IsAdmin",  isAdmin);
                 var newId = Convert.ToInt32(cmd.ExecuteScalar());
 
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 TempData["Alert"] = "User created successfully. Assign rights from Manage Rights.";
                 TempData["AlertType"] = "success";
                 return RedirectToPage("/UserRightsSetup", new { userId = newId });
@@ -169,9 +170,10 @@ public class UserSetupModel : PageModel
                 delP.ExecuteNonQuery();
             }
             using (var delU = new SqlCommand(@"
-                UPDATE tblUser SET IsActive = 0, ModifiedOn = GETDATE() WHERE UserID = @Id;", conn, tx))
+                UPDATE tblUser SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID WHERE UserID = @Id;", conn, tx))
             {
                 delU.Parameters.AddWithValue("@Id", deleteId);
+                AuditHelper.AddModifiedBy(delU, _auth.CurrentUserId);
                 delU.ExecuteNonQuery();
             }
 

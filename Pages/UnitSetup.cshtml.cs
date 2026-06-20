@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class UnitSetupModel : LookupSetupPageModel
 {
-    public UnitSetupModel(IConfiguration config) : base(config) { }
+    public UnitSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblUnit";
     protected override string IdColumn => "UnitID";

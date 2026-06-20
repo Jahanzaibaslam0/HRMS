@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -27,10 +28,12 @@ public class WorkerLocationRecord
 public class WorkerLocationSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public WorkerLocationSetupModel(IConfiguration config)
+    public WorkerLocationSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Worker Location Setup";
@@ -97,11 +100,13 @@ public class WorkerLocationSetupModel : PageModel
                         TerritoryRegionAssignment = @TerritoryRegionAssignment,
                         ClientSiteAccess          = @ClientSiteAccess,
                         IsActive                  = @IsActive,
-                        ModifiedOn                = GETDATE()
+                        ModifiedOn                = GETDATE(),
+                        ModifiedByUserID          = @ModifiedByUserID
                     WHERE WorkerLocationID = @WorkerLocationID;", conn);
                 AddParams(cmd, workerLocationID, employeeID, primaryLocationID, secondaryLocationID,
                     workLocationTypeID, workArrangementID, hybridSchedule,
                     territoryRegionAssignment, clientSiteAccess, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Worker location updated successfully.";
             }
@@ -111,14 +116,15 @@ public class WorkerLocationSetupModel : PageModel
                     INSERT INTO tblWorkerLocation
                         (EmployeeID, PrimaryLocationID, SecondaryLocationID,
                          WorkLocationTypeID, WorkArrangementID,
-                         HybridSchedule, TerritoryRegionAssignment, ClientSiteAccess, IsActive)
+                         HybridSchedule, TerritoryRegionAssignment, ClientSiteAccess, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
                         (@EmployeeID, @PrimaryLocationID, @SecondaryLocationID,
                          @WorkLocationTypeID, @WorkArrangementID,
-                         @HybridSchedule, @TerritoryRegionAssignment, @ClientSiteAccess, @IsActive);", conn);
+                         @HybridSchedule, @TerritoryRegionAssignment, @ClientSiteAccess, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, employeeID, primaryLocationID, secondaryLocationID,
                     workLocationTypeID, workArrangementID, hybridSchedule,
                     territoryRegionAssignment, clientSiteAccess, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Worker location added successfully.";
             }
@@ -147,9 +153,10 @@ public class WorkerLocationSetupModel : PageModel
         {
             using var conn = new SqlConnection(_conn);
             using var cmd = new SqlCommand(@"
-                UPDATE tblWorkerLocation SET IsActive = 0, ModifiedOn = GETDATE()
+                UPDATE tblWorkerLocation SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE WorkerLocationID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 
