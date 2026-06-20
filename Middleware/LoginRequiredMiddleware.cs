@@ -36,6 +36,12 @@ public class LoginRequiredMiddleware
             return;
         }
 
+        if (path.Equals("/auditreport", StringComparison.OrdinalIgnoreCase) && !auth.IsAdmin)
+        {
+            context.Response.Redirect("/EmployeeMaster?accessDenied=1");
+            return;
+        }
+
         await _next(context);
     }
 

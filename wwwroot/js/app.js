@@ -188,6 +188,9 @@ function renderInitialRows() {
     var contacts = readJsonScript('initialContactsData');
     var addresses = readJsonScript('initialAddressesData');
     var family = readJsonScript('initialFamilyData');
+    var education = readJsonScript('initialEducationData');
+    var certificates = readJsonScript('initialCertificatesData');
+    var documents = readJsonScript('initialDocumentsData');
     var banks = readJsonScript('initialBanksData');
 
     if (!contacts.length) contacts = [{ contactType: 'OfficialEmail', isPrimary: true }];
@@ -197,6 +200,12 @@ function renderInitialRows() {
     addresses.forEach(function (a) { addAddressRow(a); });
     if (!family.length) family = [{}];
     family.forEach(function (f) { addFamilyRow(f); });
+    if (!education.length) education = [{}];
+    education.forEach(function (e) { addEducationRow(e); });
+    if (!certificates.length) certificates = [{}];
+    certificates.forEach(function (c) { addCertificateRow(c); });
+    if (!documents.length) documents = [{}];
+    documents.forEach(function (d) { addDocumentRow(d); });
     if (!banks.length) banks = [{}];
     banks.forEach(function (b) { addBankRow(b); });
 }
@@ -283,6 +292,165 @@ function addFamilyRow(data) {
     tr.querySelector('.family-dob').value = data.dateOfBirth || data.DateOfBirth || '';
     tr.querySelector('.family-contact').value = data.contactNumber || data.ContactNumber || '';
     tr.querySelector('.family-dependent').checked = !!(data.isDependent || data.IsDependent);
+}
+
+function addEducationRow(data) {
+    data = data || {};
+    var tbody = document.querySelector('#educationTable tbody');
+    if (!tbody) return;
+
+    var tr = document.createElement('tr');
+    tr.innerHTML = ''
+        + '<td><select class="form-control edu-qualification">'
+        + '  <option value="">-- Select --</option>'
+        + '  <option value="Matric / O-Level">Matric / O-Level</option>'
+        + '  <option value="Intermediate / A-Level">Intermediate / A-Level</option>'
+        + '  <option value="Diploma">Diploma</option>'
+        + '  <option value="Certificate">Certificate</option>'
+        + '  <option value="Bachelor">Bachelor</option>'
+        + '  <option value="Master">Master</option>'
+        + '  <option value="MPhil">MPhil</option>'
+        + '  <option value="PhD">PhD</option>'
+        + '  <option value="Other">Other</option>'
+        + '</select></td>'
+        + '<td><input type="text" class="form-control edu-degree" maxlength="150" /></td>'
+        + '<td><input type="text" class="form-control edu-specialization" maxlength="150" /></td>'
+        + '<td><input type="text" class="form-control edu-institution" maxlength="200" /></td>'
+        + '<td><input type="number" class="form-control edu-year" min="1950" max="2100" /></td>'
+        + '<td><input type="text" class="form-control edu-grade" maxlength="20" placeholder="e.g. 3.5 / A+" /></td>'
+        + '<td><button type="button" class="btn-icon btn-delete" onclick="removeRow(this)">X</button></td>';
+
+    tbody.appendChild(tr);
+    tr.querySelector('.edu-qualification').value = data.highestQualification || data.HighestQualification || '';
+    tr.querySelector('.edu-degree').value = data.degreeCertificate || data.DegreeCertificate || '';
+    tr.querySelector('.edu-specialization').value = data.specialization || data.Specialization || '';
+    tr.querySelector('.edu-institution').value = data.institution || data.Institution || '';
+    tr.querySelector('.edu-year').value = data.yearOfPassing || data.YearOfPassing || '';
+    tr.querySelector('.edu-grade').value = data.gradeCGPA || data.GradeCGPA || '';
+}
+
+function reindexCertificateRows() {
+    document.querySelectorAll('#certificateTable tbody tr').forEach(function (tr, idx) {
+        tr.setAttribute('data-row-index', idx);
+        var fileInput = tr.querySelector('.cert-copy-file');
+        if (fileInput) {
+            fileInput.name = 'CertCopy_' + idx;
+            fileInput.setAttribute('form', 'certificateSaveForm');
+        }
+    });
+}
+
+function addCertificateRow(data) {
+    data = data || {};
+    var tbody = document.querySelector('#certificateTable tbody');
+    if (!tbody) return;
+
+    var rowIndex = tbody.querySelectorAll('tr').length;
+    var copyPath = data.certificateCopyPath || data.CertificateCopyPath || '';
+    var copyLink = copyPath
+        ? '<a class="cert-copy-link" href="' + escapeHtml(copyPath) + '" target="_blank">View</a><br/>'
+        : '';
+
+    var tr = document.createElement('tr');
+    tr.setAttribute('data-row-index', rowIndex);
+    tr.innerHTML = ''
+        + '<td><input type="text" class="form-control cert-name" maxlength="200" /></td>'
+        + '<td><input type="text" class="form-control cert-body" maxlength="200" /></td>'
+        + '<td><input type="text" class="form-control cert-number" maxlength="100" /></td>'
+        + '<td><input type="date" class="form-control cert-issue-date" /></td>'
+        + '<td><input type="date" class="form-control cert-expiry-date" /></td>'
+        + '<td style="text-align:center;"><input type="checkbox" class="cert-renewal" /></td>'
+        + '<td>' + copyLink
+        + '<input type="file" class="cert-copy-file" form="certificateSaveForm" name="CertCopy_' + rowIndex + '" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />'
+        + '<input type="hidden" class="cert-copy-path" /></td>'
+        + '<td><button type="button" class="btn-icon btn-delete" onclick="removeCertificateRow(this)">X</button></td>';
+
+    tbody.appendChild(tr);
+    tr.querySelector('.cert-name').value = data.certificationName || data.CertificationName || '';
+    tr.querySelector('.cert-body').value = data.certificationBody || data.CertificationBody || '';
+    tr.querySelector('.cert-number').value = data.certificateNumber || data.CertificateNumber || '';
+    tr.querySelector('.cert-issue-date').value = data.issueDate || data.IssueDate || '';
+    tr.querySelector('.cert-expiry-date').value = data.expiryDate || data.ExpiryDate || '';
+    tr.querySelector('.cert-renewal').checked = !!(data.renewalRequired || data.RenewalRequired);
+    tr.querySelector('.cert-copy-path').value = copyPath;
+    reindexCertificateRows();
+}
+
+function removeCertificateRow(btn) {
+    var tbody = document.querySelector('#certificateTable tbody');
+    if (!tbody || tbody.querySelectorAll('tr').length <= 1) return;
+    btn.closest('tr').remove();
+    reindexCertificateRows();
+}
+
+function reindexDocumentRows() {
+    document.querySelectorAll('#documentTable tbody tr').forEach(function (tr, idx) {
+        tr.setAttribute('data-row-index', idx);
+        var fileInput = tr.querySelector('.doc-file');
+        if (fileInput) {
+            fileInput.name = 'DocFile_' + idx;
+            fileInput.setAttribute('form', 'documentSaveForm');
+        }
+    });
+}
+
+function addDocumentRow(data) {
+    data = data || {};
+    var tbody = document.querySelector('#documentTable tbody');
+    if (!tbody) return;
+
+    var rowIndex = tbody.querySelectorAll('tr').length;
+    var docPath = data.documentPath || data.DocumentPath || '';
+    var fileName = data.originalFileName || data.OriginalFileName || '';
+    var viewLabel = fileName || 'View Document';
+    var viewLink = docPath
+        ? '<a class="doc-view-link" href="' + escapeHtml(docPath) + '" target="_blank" title="' + escapeHtml(viewLabel) + '">View</a><br/>'
+        : '';
+
+    var docTypes = readJsonScript('documentTypeLookupData');
+    var typeOptions = '<option value="">-- Select --</option>';
+    docTypes.forEach(function (dt) {
+        var id = dt.id || dt.Id;
+        var name = dt.name || dt.Name || '';
+        typeOptions += '<option value="' + escapeHtml(id) + '">' + escapeHtml(name) + '</option>';
+    });
+
+    var tr = document.createElement('tr');
+    tr.setAttribute('data-row-index', rowIndex);
+    tr.innerHTML = ''
+        + '<td><select class="form-control doc-type">' + typeOptions + '</select></td>'
+        + '<td><input type="text" class="form-control doc-number" maxlength="100" /></td>'
+        + '<td><input type="date" class="form-control doc-issue-date" /></td>'
+        + '<td><input type="date" class="form-control doc-expiry-date" /></td>'
+        + '<td><input type="text" class="form-control doc-remarks" maxlength="250" /></td>'
+        + '<td>' + viewLink
+        + '<input type="file" class="doc-file" form="documentSaveForm" name="DocFile_' + rowIndex + '" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />'
+        + '<input type="hidden" class="doc-path" />'
+        + '<input type="hidden" class="doc-original-name" /></td>'
+        + '<td><select class="form-control doc-verification">'
+        + '  <option value="Pending">Pending</option>'
+        + '  <option value="Verified">Verified</option>'
+        + '  <option value="Rejected">Rejected</option>'
+        + '</select></td>'
+        + '<td><button type="button" class="btn-icon btn-delete" onclick="removeDocumentRow(this)">X</button></td>';
+
+    tbody.appendChild(tr);
+    tr.querySelector('.doc-type').value = data.documentTypeID || data.DocumentTypeID || '';
+    tr.querySelector('.doc-number').value = data.documentNumber || data.DocumentNumber || '';
+    tr.querySelector('.doc-issue-date').value = data.issueDate || data.IssueDate || '';
+    tr.querySelector('.doc-expiry-date').value = data.expiryDate || data.ExpiryDate || '';
+    tr.querySelector('.doc-remarks').value = data.remarks || data.Remarks || '';
+    tr.querySelector('.doc-path').value = docPath;
+    tr.querySelector('.doc-original-name').value = fileName;
+    tr.querySelector('.doc-verification').value = data.verificationStatus || data.VerificationStatus || 'Pending';
+    reindexDocumentRows();
+}
+
+function removeDocumentRow(btn) {
+    var tbody = document.querySelector('#documentTable tbody');
+    if (!tbody || tbody.querySelectorAll('tr').length <= 1) return;
+    btn.closest('tr').remove();
+    reindexDocumentRows();
 }
 
 function escapeHtml(value) {
@@ -391,6 +559,54 @@ function readFamilyRows() {
         .filter(function (f) { return f.memberName; });
 }
 
+function readEducationRows() {
+    return Array.from(document.querySelectorAll('#educationTable tbody tr'))
+        .map(function (tr) {
+            return {
+                highestQualification: tr.querySelector('.edu-qualification').value,
+                degreeCertificate: tr.querySelector('.edu-degree').value.trim(),
+                specialization: tr.querySelector('.edu-specialization').value.trim(),
+                institution: tr.querySelector('.edu-institution').value.trim(),
+                yearOfPassing: tr.querySelector('.edu-year').value,
+                gradeCGPA: tr.querySelector('.edu-grade').value.trim()
+            };
+        })
+        .filter(function (e) {
+            return e.highestQualification || e.degreeCertificate || e.institution;
+        });
+}
+
+function readCertificateRows() {
+    return Array.from(document.querySelectorAll('#certificateTable tbody tr'))
+        .map(function (tr) {
+            return {
+                certificationName: tr.querySelector('.cert-name').value.trim(),
+                certificationBody: tr.querySelector('.cert-body').value.trim(),
+                certificateNumber: tr.querySelector('.cert-number').value.trim(),
+                issueDate: tr.querySelector('.cert-issue-date').value,
+                expiryDate: tr.querySelector('.cert-expiry-date').value,
+                renewalRequired: tr.querySelector('.cert-renewal').checked,
+                certificateCopyPath: tr.querySelector('.cert-copy-path').value
+            };
+        });
+}
+
+function readDocumentRows() {
+    return Array.from(document.querySelectorAll('#documentTable tbody tr'))
+        .map(function (tr) {
+            return {
+                documentTypeID: parseInt(tr.querySelector('.doc-type').value || '0', 10),
+                documentNumber: tr.querySelector('.doc-number').value.trim(),
+                issueDate: tr.querySelector('.doc-issue-date').value,
+                expiryDate: tr.querySelector('.doc-expiry-date').value,
+                remarks: tr.querySelector('.doc-remarks').value.trim(),
+                documentPath: tr.querySelector('.doc-path').value,
+                originalFileName: tr.querySelector('.doc-original-name').value,
+                verificationStatus: tr.querySelector('.doc-verification').value
+            };
+        });
+}
+
 function readBankRows() {
     return Array.from(document.querySelectorAll('#bankTable tbody tr'))
         .map(function (tr) {
@@ -415,11 +631,13 @@ function prepareEmployeePayload() {
     var contacts = readContactRows();
     var addresses = readAddressRows();
     var family = readFamilyRows();
+    var education = readEducationRows();
     var banks = readBankRows();
 
     document.getElementById('ContactsJson').value = JSON.stringify(contacts);
     document.getElementById('AddressesJson').value = JSON.stringify(addresses);
     document.getElementById('FamilyMembersJson').value = JSON.stringify(family);
+    document.getElementById('EducationJson').value = JSON.stringify(education);
     document.getElementById('BanksJson').value = JSON.stringify(banks);
     hideClientNotice();
     return true;
@@ -453,6 +671,23 @@ function submitProfileSection(section) {
         document.getElementById('familySaveEmployeeID').value = employeeId;
         document.getElementById('familySaveEmployeeCode').value = employeeCode;
         document.getElementById('familySaveJson').value = JSON.stringify(readFamilyRows());
+    } else if (section === 'education') {
+        form = document.getElementById('educationSaveForm');
+        document.getElementById('educationSaveEmployeeID').value = employeeId;
+        document.getElementById('educationSaveEmployeeCode').value = employeeCode;
+        document.getElementById('educationSaveJson').value = JSON.stringify(readEducationRows());
+    } else if (section === 'certificates') {
+        form = document.getElementById('certificateSaveForm');
+        document.getElementById('certificateSaveEmployeeID').value = employeeId;
+        document.getElementById('certificateSaveEmployeeCode').value = employeeCode;
+        document.getElementById('certificateSaveJson').value = JSON.stringify(readCertificateRows());
+        reindexCertificateRows();
+    } else if (section === 'documents') {
+        form = document.getElementById('documentSaveForm');
+        document.getElementById('documentSaveEmployeeID').value = employeeId;
+        document.getElementById('documentSaveEmployeeCode').value = employeeCode;
+        document.getElementById('documentSaveJson').value = JSON.stringify(readDocumentRows());
+        reindexDocumentRows();
     } else if (section === 'banks') {
         form = document.getElementById('bankSaveForm');
         document.getElementById('bankSaveEmployeeID').value = employeeId;

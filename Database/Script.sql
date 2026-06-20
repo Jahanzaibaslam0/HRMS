@@ -228,6 +228,8 @@ GO
 
 IF COL_LENGTH('tblDepartment', 'AliasName') IS NULL
     ALTER TABLE tblDepartment ADD AliasName NVARCHAR(50) NULL;
+IF COL_LENGTH('tblDepartment', 'DepartmentManagerID') IS NULL
+    ALTER TABLE tblDepartment ADD DepartmentManagerID INT NULL;
 IF COL_LENGTH('tblDivision', 'AliasName') IS NULL
     ALTER TABLE tblDivision ADD AliasName NVARCHAR(50) NULL;
 IF COL_LENGTH('tblBloodGroup', 'AliasName') IS NULL
@@ -622,6 +624,94 @@ IF COL_LENGTH('tblEmployeeBank', 'BranchCode') IS NULL
     ALTER TABLE tblEmployeeBank ADD BranchCode NVARCHAR(50) NULL;
 IF COL_LENGTH('tblEmployeeBank', 'BranchName') IS NULL
     ALTER TABLE tblEmployeeBank ADD BranchName NVARCHAR(150) NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblEmployeeEducation' AND type = 'U')
+BEGIN
+    CREATE TABLE tblEmployeeEducation (
+        EducationID            INT IDENTITY(1,1) PRIMARY KEY,
+        EmployeeID             INT NOT NULL REFERENCES tblEmployee(EmployeeID) ON DELETE CASCADE,
+        HighestQualification   NVARCHAR(100) NULL,
+        DegreeCertificate      NVARCHAR(150) NULL,
+        Specialization         NVARCHAR(150) NULL,
+        Institution            NVARCHAR(200) NULL,
+        YearOfPassing          INT NULL,
+        GradeCGPA              NVARCHAR(20) NULL,
+        SortOrder              INT NOT NULL DEFAULT 1,
+        CreatedOn              DATETIME NOT NULL DEFAULT GETDATE(),
+        ModifiedOn             DATETIME NULL
+    );
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblSoftwareLink' AND type = 'U')
+BEGIN
+    CREATE TABLE tblSoftwareLink (
+        SoftwareLinkID   INT IDENTITY(1,1) PRIMARY KEY,
+        SoftwareName     NVARCHAR(100) NOT NULL,
+        SoftwareUrl      NVARCHAR(500) NOT NULL,
+        Category         NVARCHAR(50)  NULL,
+        Description      NVARCHAR(250) NULL,
+        SortOrder        INT NOT NULL DEFAULT 1,
+        IsActive         BIT NOT NULL DEFAULT 1,
+        CreatedOn        DATETIME NOT NULL DEFAULT GETDATE(),
+        ModifiedOn       DATETIME NULL
+    );
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblDocumentType' AND type = 'U')
+BEGIN
+    CREATE TABLE tblDocumentType (
+        DocumentTypeID   INT IDENTITY(1,1) PRIMARY KEY,
+        DocumentTypeName NVARCHAR(100) NOT NULL UNIQUE,
+        AliasName        NVARCHAR(50)  NULL,
+        IsActive         BIT NOT NULL DEFAULT 1,
+        CreatedOn        DATETIME NOT NULL DEFAULT GETDATE(),
+        ModifiedOn       DATETIME NULL
+    );
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblEmployeeDocument' AND type = 'U')
+BEGIN
+    CREATE TABLE tblEmployeeDocument (
+        EmployeeDocumentID INT IDENTITY(1,1) PRIMARY KEY,
+        EmployeeID         INT NOT NULL REFERENCES tblEmployee(EmployeeID) ON DELETE CASCADE,
+        DocumentTypeID     INT NULL,
+        DocumentNumber     NVARCHAR(100) NULL,
+        IssueDate          DATE NULL,
+        ExpiryDate         DATE NULL,
+        Remarks            NVARCHAR(250) NULL,
+        DocumentPath       NVARCHAR(500) NULL,
+        OriginalFileName   NVARCHAR(255) NULL,
+        VerificationStatus NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+        VerifiedOn         DATETIME NULL,
+        VerifiedByUserID   INT NULL,
+        SortOrder          INT NOT NULL DEFAULT 1,
+        CreatedOn          DATETIME NOT NULL DEFAULT GETDATE(),
+        ModifiedOn         DATETIME NULL
+    );
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblEmployeeCertificate' AND type = 'U')
+BEGIN
+    CREATE TABLE tblEmployeeCertificate (
+        CertificateID        INT IDENTITY(1,1) PRIMARY KEY,
+        EmployeeID           INT NOT NULL REFERENCES tblEmployee(EmployeeID) ON DELETE CASCADE,
+        CertificationName    NVARCHAR(200) NULL,
+        CertificationBody    NVARCHAR(200) NULL,
+        CertificateNumber    NVARCHAR(100) NULL,
+        IssueDate            DATE NULL,
+        ExpiryDate           DATE NULL,
+        RenewalRequired      BIT NOT NULL DEFAULT 0,
+        CertificateCopyPath  NVARCHAR(500) NULL,
+        SortOrder            INT NOT NULL DEFAULT 1,
+        CreatedOn            DATETIME NOT NULL DEFAULT GETDATE(),
+        ModifiedOn           DATETIME NULL
+    );
+END
 GO
 
 -- =============================================
@@ -1028,6 +1118,193 @@ BEGIN
         ModifiedOn                DATETIME      NULL
     );
 END
+GO
+
+-- =============================================
+-- Expense Process (Parent / Child)
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblExpense' AND type = 'U')
+BEGIN
+    CREATE TABLE tblExpense (
+        ExpenseID        INT IDENTITY(1,1) PRIMARY KEY,
+        EmployeeID       INT           NOT NULL,
+        ExpenseDate      DATE          NULL,
+        LocationID       INT           NULL,
+        ExpensePurpose   NVARCHAR(500) NULL,
+        WorkflowStatus   NVARCHAR(50)  NOT NULL DEFAULT 'Draft',
+        VehicleNo        NVARCHAR(50)  NULL,
+        MeterReading     NVARCHAR(50)  NULL,
+        DocumentStatus   NVARCHAR(50)  NULL,
+        CreatedOn        DATETIME      NOT NULL DEFAULT GETDATE(),
+        ModifiedOn       DATETIME      NULL,
+        CreatedByUserID  INT           NULL,
+        ModifiedByUserID INT           NULL
+    );
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblExpenseDetail' AND type = 'U')
+BEGIN
+    CREATE TABLE tblExpenseDetail (
+        DetailID               INT IDENTITY(1,1) PRIMARY KEY,
+        ExpenseID              INT           NOT NULL,
+        ExpenseCategoryID      INT           NULL,
+        Description            NVARCHAR(500) NULL,
+        PaymentMethod          NVARCHAR(50)  NULL,
+        TransactionDate        DATE          NULL,
+        Currency               NVARCHAR(10)  NULL DEFAULT 'PKR',
+        TransactionAmount      DECIMAL(18,2) NULL,
+        Amount                 DECIMAL(18,2) NULL,
+        ApprovalStatus         NVARCHAR(50)  NULL DEFAULT 'Pending',
+        OriginalReceiptID      NVARCHAR(100) NULL,
+        OriginalReceiptDocPath NVARCHAR(500) NULL,
+        SortOrder              INT           NOT NULL DEFAULT 0,
+        CreatedOn              DATETIME      NOT NULL DEFAULT GETDATE(),
+        ModifiedOn             DATETIME      NULL,
+        CreatedByUserID        INT           NULL,
+        ModifiedByUserID       INT           NULL
+    );
+END
+GO
+
+END
+GO
+
+-- =============================================
+-- Employee Performance Process
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblEmployeePerformance' AND type = 'U')
+BEGIN
+    CREATE TABLE tblEmployeePerformance (
+        PerformanceID                INT IDENTITY(1,1) PRIMARY KEY,
+        EmployeeID                   INT NOT NULL REFERENCES tblEmployee(EmployeeID) ON DELETE CASCADE,
+        PerformanceReviewCycle       NVARCHAR(50)  NULL,
+        LastReviewDate               DATE          NULL,
+        LastReviewRating             NVARCHAR(50)  NULL,
+        LastReviewScore              DECIMAL(5,2)  NULL,
+        NextReviewDue                DATE          NULL,
+        KPIsAssigned                 BIT NOT NULL DEFAULT 0,
+        GoalAchievementPercent       DECIMAL(5,2)  NULL,
+        PerformanceImprovementPlan   BIT NOT NULL DEFAULT 0,
+        CareerPath                   NVARCHAR(100) NULL,
+        PromotionReady               BIT NOT NULL DEFAULT 0,
+        SuccessionPool               BIT NOT NULL DEFAULT 0,
+        CreatedOn                    DATETIME NOT NULL DEFAULT GETDATE(),
+        ModifiedOn                   DATETIME NULL
+    );
+END
+GO
+
+-- =============================================
+-- Employee Training Process
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblEmployeeTraining' AND type = 'U')
+BEGIN
+    CREATE TABLE tblEmployeeTraining (
+        EmployeeTrainingID           INT IDENTITY(1,1) PRIMARY KEY,
+        EmployeeID                   INT NOT NULL REFERENCES tblEmployee(EmployeeID) ON DELETE CASCADE,
+        MandatoryTrainingStatus      NVARCHAR(50)  NULL,
+        SafetyTrainingValidTill      DATE          NULL,
+        GMPTrainingValidTill         DATE          NULL,
+        TrainingHoursYTD             DECIMAL(8,2)  NULL,
+        TrainingHoursRequiredAnnual  DECIMAL(8,2)  NULL,
+        LastTrainingDate             DATE          NULL,
+        NextTrainingDue              DATE          NULL,
+        TrainingName                 NVARCHAR(200) NULL,
+        TrainingCode                 NVARCHAR(50)  NULL,
+        TrainingDepartment           NVARCHAR(150) NOT NULL DEFAULT 'All',
+        CreatedOn                    DATETIME NOT NULL DEFAULT GETDATE(),
+        ModifiedOn                   DATETIME NULL
+    );
+END
+GO
+
+-- =============================================
+-- Recruitment Process
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE name = 'tblRecruitment' AND type = 'U')
+BEGIN
+    CREATE TABLE tblRecruitment (
+        RecruitmentID                INT IDENTITY(1,1) PRIMARY KEY,
+        JobRequisitionNumber         NVARCHAR(50)   NULL,
+        RecruitmentSource            NVARCHAR(80)   NULL,
+        PositionTitle                NVARCHAR(200)  NULL,
+        DepartmentID                 INT            NULL,
+        HiringManagerEmployeeID      INT            NULL,
+        CandidateName                NVARCHAR(200)  NOT NULL,
+        PersonalEmail                NVARCHAR(150)  NULL,
+        PersonalPhone                NVARCHAR(30)   NULL,
+        ApplicationDate              DATE           NULL,
+        InterviewDate                DATE           NULL,
+        InterviewStatus              NVARCHAR(30)   NULL,
+        SelectionDate                DATE           NULL,
+        OfferLetterNumber            NVARCHAR(50)   NULL,
+        OfferedSalary                DECIMAL(18,2)  NULL,
+        OfferDate                    DATE           NULL,
+        OfferAcceptedDate            DATE           NULL,
+        BackgroundVerificationStatus NVARCHAR(50)   NULL,
+        ReferenceCheckStatus         NVARCHAR(50)   NULL,
+        OnboardingStatus             NVARCHAR(50)   NULL,
+        JoiningDate                  DATE           NULL,
+        InductionCompleted           BIT NOT NULL DEFAULT 0,
+        InductionDate                DATE           NULL,
+        DocumentsSubmitted           BIT NOT NULL DEFAULT 0,
+        SystemAccessProvided         BIT NOT NULL DEFAULT 0,
+        OfficialEmailCreated         NVARCHAR(150)  NULL,
+        EquipmentIssued              BIT NOT NULL DEFAULT 0,
+        AssetDetails                 NVARCHAR(500)  NULL,
+        TrainingScheduleAssigned     BIT NOT NULL DEFAULT 0,
+        BuddyMentorEmployeeID        INT            NULL,
+        ProbationPeriod              NVARCHAR(30)   NULL,
+        ProbationReviewSchedule      DATE           NULL,
+        ConfirmationStatus           NVARCHAR(50)   NULL,
+        CreatedOn                    DATETIME NOT NULL DEFAULT GETDATE(),
+        ModifiedOn                   DATETIME NULL
+    );
+END
+GO
+
+-- =============================================
+-- Audit columns (CreatedByUserID, ModifiedByUserID, CreatedOn, ModifiedOn)
+-- Applied on startup via Program.cs for all data tables.
+-- =============================================
+DECLARE @AuditTables TABLE (TableName SYSNAME);
+INSERT INTO @AuditTables (TableName) VALUES
+    ('tblDivision'),('tblDepartment'),('tblEmployee'),
+    ('tblGender'),('tblBloodGroup'),('tblBenefitEntitlement'),('tblExpenseCategory'),
+    ('tblBankMaster'),('tblReligion'),('tblNationality'),('tblLanguage'),
+    ('tblUnit'),('tblLocation'),('tblRegion'),('tblWing'),('tblGrade'),
+    ('tblEmploymentType'),('tblDesignationLevel'),('tblCostCenter'),('tblEmploymentStatus'),
+    ('tblBusinessSegment'),('tblBusinessUnit'),('tblWorkforceSegment'),
+    ('tblEmployeeContact'),('tblEmployeeAddress'),('tblEmployeeFamilyMember'),('tblEmployeeBank'),
+    ('tblEmployeeEducation'),('tblEmployeeCertificate'),
+    ('tblSkill'),('tblWorkerCategory'),('tblLegalEntity'),('tblSalesTeam'),
+    ('tblWorkLocationType'),('tblWorkArrangement'),('tblExtension'),
+    ('tblCity'),('tblProvince'),('tblSalesGroup'),('tblWorkerLocation'),
+    ('tblJob'),('tblBenefit'),('tblUser'),('tblAppForm'),('tblUserPermission'),
+    ('tblExpense'),('tblExpenseDetail'),('tblEmployeePerformance'),('tblEmployeeTraining'),('tblRecruitment');
+
+DECLARE @t SYSNAME, @sql NVARCHAR(MAX);
+DECLARE audit_cur CURSOR LOCAL FAST_FORWARD FOR SELECT TableName FROM @AuditTables;
+OPEN audit_cur;
+FETCH NEXT FROM audit_cur INTO @t;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    IF OBJECT_ID(@t) IS NOT NULL
+    BEGIN
+        IF COL_LENGTH(@t, 'CreatedByUserID') IS NULL
+            EXEC('ALTER TABLE ' + @t + ' ADD CreatedByUserID INT NULL');
+        IF COL_LENGTH(@t, 'ModifiedByUserID') IS NULL
+            EXEC('ALTER TABLE ' + @t + ' ADD ModifiedByUserID INT NULL');
+        IF COL_LENGTH(@t, 'CreatedOn') IS NULL
+            EXEC('ALTER TABLE ' + @t + ' ADD CreatedOn DATETIME NOT NULL CONSTRAINT DF_' + @t + '_CreatedOn DEFAULT GETDATE()');
+        IF COL_LENGTH(@t, 'ModifiedOn') IS NULL
+            EXEC('ALTER TABLE ' + @t + ' ADD ModifiedOn DATETIME NULL');
+    END
+    FETCH NEXT FROM audit_cur INTO @t;
+END
+CLOSE audit_cur;
+DEALLOCATE audit_cur;
 GO
 
 PRINT 'HRMSDB setup completed successfully.';

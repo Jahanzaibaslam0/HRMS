@@ -9,6 +9,13 @@ public static class AppForms
     {
         new("EmployeeMaster",          "Employee Master",          "/EmployeeMaster",          "Transactions",       1),
         new("EmployeeReport",          "Internal Employee Directory","/EmployeeReport",          "Transactions",       2),
+        new("QuickLinks",              "Quick Links",              "/QuickLinks",              "Transactions",       3),
+        new("Notifications",           "Notifications",            "/Notifications",           "Transactions",       4),
+        new("Memorandums",             "Memorandums",              "/Memorandums",             "Transactions",       5),
+        new("ExpenseMaster",           "Expense Process",          "/ExpenseMaster",           "Transactions",       6),
+        new("PerformanceMaster",       "Employee Performance",     "/PerformanceMaster",       "Transactions",       7),
+        new("TrainingMaster",          "Employee Training",        "/TrainingMaster",          "Transactions",       8),
+        new("RecruitmentMaster",       "Recruitment Process",      "/RecruitmentMaster",       "Transactions",       9),
 
         new("DivisionSetup",           "Division Setup",           "/DivisionSetup",           "Organization Setup", 10),
         new("BusinessSegmentSetup",    "Business Segment Setup",   "/BusinessSegmentSetup",    "Organization Setup", 11),
@@ -34,6 +41,9 @@ public static class AppForms
         new("DepartmentSetup",         "Department Setup",         "/DepartmentSetup",         "Organization Setup", 31),
         new("RegionSetup",             "Region Setup",             "/RegionSetup",             "Organization Setup", 32),
         new("LocationSetup",           "Location Setup",           "/LocationSetup",           "Organization Setup", 33),
+        new("SoftwareLinkSetup",       "Software Link Setup",      "/SoftwareLinkSetup",       "Organization Setup", 34),
+        new("NotificationSetup",       "Notification Setup",       "/NotificationSetup",       "Organization Setup", 35),
+        new("MemorandumSetup",         "Memorandum Setup",         "/MemorandumSetup",         "Organization Setup", 36),
 
         new("GradeSetup",              "Grade Setup",              "/GradeSetup",              "Employee Setup",     33),
         new("EmploymentTypeSetup",     "Employment Type Setup",    "/EmploymentTypeSetup",     "Employee Setup",     34),
@@ -46,9 +56,11 @@ public static class AppForms
         new("WorkerCategorySetup",     "Worker Category Setup",    "/WorkerCategorySetup",     "Employee Setup",     41),
         new("JobSetup",                "Job Setup",                "/JobSetup",                "Employee Setup",     42),
         new("WorkerLocationSetup",     "Worker Location Setup",    "/WorkerLocationSetup",     "Employee Setup",     43),
+        new("DocumentTypeSetup",       "Document Type Setup",      "/DocumentTypeSetup",       "Employee Setup",     44),
 
         new("UserSetup",               "User Setup",               "/UserSetup",               "Security",           50),
         new("UserRightsSetup",         "User Rights Setup",        "/UserRightsSetup",         "Security",           51),
+        new("AuditReport",             "Audit Log Report",         "/AuditReport",             "Security",           52),
     };
 
     public static FormDef? FindByPath(string path)

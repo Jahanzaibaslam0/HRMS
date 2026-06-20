@@ -99,13 +99,14 @@ public class PermissionService
         foreach (var p in permissions.Where(x => x.CanRead || x.CanWrite || x.CanDelete))
         {
             using var ins = new SqlCommand(@"
-                INSERT INTO tblUserPermission (UserID, FormKey, CanRead, CanWrite, CanDelete)
-                VALUES (@UserID, @FormKey, @CanRead, @CanWrite, @CanDelete);", conn, tx);
+                INSERT INTO tblUserPermission (UserID, FormKey, CanRead, CanWrite, CanDelete, CreatedOn, CreatedByUserID)
+                VALUES (@UserID, @FormKey, @CanRead, @CanWrite, @CanDelete, GETDATE(), @CreatedByUserID);", conn, tx);
             ins.Parameters.AddWithValue("@UserID",    userId);
             ins.Parameters.AddWithValue("@FormKey",     p.FormKey);
             ins.Parameters.AddWithValue("@CanRead",    p.CanRead);
             ins.Parameters.AddWithValue("@CanWrite",   p.CanWrite);
             ins.Parameters.AddWithValue("@CanDelete", p.CanDelete);
+            AuditHelper.AddCreatedBy(ins, _auth.CurrentUserId);
             ins.ExecuteNonQuery();
         }
 
