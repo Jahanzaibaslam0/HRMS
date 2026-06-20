@@ -18,6 +18,10 @@ build_property.GenerateRazorMetadataSourceChecksumAttributes =
 build_property.MSBuildProjectDirectory = C:\Users\jahanzaib.aslam.AIBG\HRMS
 build_property._RazorSourceGeneratorDebug = 
 
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/AuditReport.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQXVkaXRSZXBvcnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/BankSetup.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQmFua1NldHVwLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -62,6 +66,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGl2aXNpb25TZXR1cC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/DocumentTypeSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRG9jdW1lbnRUeXBlU2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/EmployeeMaster.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRW1wbG95ZWVNYXN0ZXIuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
@@ -80,6 +88,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/ExpenseCategorySetup.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhwZW5zZUNhdGVnb3J5U2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/ExpenseMaster.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhwZW5zZU1hc3Rlci5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/ExtensionSetup.cshtml]
@@ -114,12 +126,40 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTG9naW4uY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/Memorandums.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWVtb3JhbmR1bXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/MemorandumSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTWVtb3JhbmR1bVNldHVwLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/NationalitySetup.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTmF0aW9uYWxpdHlTZXR1cC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/Notifications.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTm90aWZpY2F0aW9ucy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/NotificationSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTm90aWZpY2F0aW9uU2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/PerformanceMaster.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUGVyZm9ybWFuY2VNYXN0ZXIuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/ProvinceSetup.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvdmluY2VTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/QuickLinks.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUXVpY2tMaW5rcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/RecruitmentMaster.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVjcnVpdG1lbnRNYXN0ZXIuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/RegionSetup.cshtml]
@@ -140,6 +180,14 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/SkillSetup.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2tpbGxTZXR1cC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/SoftwareLinkSetup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU29mdHdhcmVMaW5rU2V0dXAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/TrainingMaster.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVHJhaW5pbmdNYXN0ZXIuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/UnitSetup.cshtml]
@@ -188,6 +236,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/_LookupSetupPage.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX0xvb2t1cFNldHVwUGFnZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/_NotificationPopup.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX05vdGlmaWNhdGlvblBvcHVwLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/jahanzaib.aslam.AIBG/HRMS/Pages/_ViewImports.cshtml]

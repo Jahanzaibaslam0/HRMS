@@ -1973,7 +1973,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\jahanzaib.aslam.AIBG\\.nuget\\packages\\": {}
+    "C:\\Users\\jahanzaib.aslam.AIBG\\AppData\\Local\\Temp\\cursor-sandbox-cache\\83b54fbaad6e3b8806b66440cd68bfaf\\nuget": {}
   },
   "project": {
     "version": "1.0.0",
@@ -1981,7 +1981,7 @@
       "projectUniqueName": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\HRMS.csproj",
       "projectName": "HRMS",
       "projectPath": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\HRMS.csproj",
-      "packagesPath": "C:\\Users\\jahanzaib.aslam.AIBG\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\jahanzaib.aslam.AIBG\\AppData\\Local\\Temp\\cursor-sandbox-cache\\83b54fbaad6e3b8806b66440cd68bfaf\\nuget",
       "outputPath": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [

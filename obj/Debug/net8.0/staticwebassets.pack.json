@@ -5,8 +5,24 @@
       "PackagePath": "staticwebassets\\css\\style.css"
     },
     {
+      "Id": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\images\\gb-logo.png",
+      "PackagePath": "staticwebassets\\images\\gb-logo.png"
+    },
+    {
       "Id": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\js\\app.js",
       "PackagePath": "staticwebassets\\js\\app.js"
+    },
+    {
+      "Id": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\js\\confirm-delete.js",
+      "PackagePath": "staticwebassets\\js\\confirm-delete.js"
+    },
+    {
+      "Id": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\js\\expense.js",
+      "PackagePath": "staticwebassets\\js\\expense.js"
+    },
+    {
+      "Id": "C:\\Users\\jahanzaib.aslam.AIBG\\HRMS\\wwwroot\\uploads\\employee-documents\\1_0_20260619164505379.PNG",
+      "PackagePath": "staticwebassets\\uploads\\employee-documents\\1_0_20260619164505379.PNG"
     },
     {
       "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.HRMS.Microsoft.AspNetCore.StaticWebAssets.props",
