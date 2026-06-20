@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -16,10 +17,12 @@ public class CityRecord
 public class CitySetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public CitySetupModel(IConfiguration config)
+    public CitySetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "City Setup";
@@ -62,18 +65,20 @@ public class CitySetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     UPDATE tblCity SET CityCode = @Code, CityName = @Name, AliasName = @AliasName,
-                        IsActive = @IsActive, ModifiedOn = GETDATE()
+                        IsActive = @IsActive, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                     WHERE CityID = @ID;", conn);
                 AddParams(cmd, cityID, cityCode, cityName, aliasName, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "City updated successfully.";
             }
             else
             {
                 using var cmd = new SqlCommand(@"
-                    INSERT INTO tblCity (CityCode, CityName, AliasName, IsActive)
-                    VALUES (@Code, @Name, @AliasName, @IsActive);", conn);
+                    INSERT INTO tblCity (CityCode, CityName, AliasName, IsActive, CreatedOn, CreatedByUserID)
+                    VALUES (@Code, @Name, @AliasName, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, cityCode, cityName, aliasName, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "City added successfully.";
             }
@@ -99,8 +104,9 @@ public class CitySetupModel : PageModel
         try
         {
             using var conn = new SqlConnection(_conn);
-            using var cmd = new SqlCommand(@"UPDATE tblCity SET IsActive = 0, ModifiedOn = GETDATE() WHERE CityID = @ID;", conn);
+            using var cmd = new SqlCommand(@"UPDATE tblCity SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID WHERE CityID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
             TempData["Alert"] = "City removed successfully.";

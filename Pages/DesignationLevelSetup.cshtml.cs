@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class DesignationLevelSetupModel : LookupSetupPageModel
 {
-    public DesignationLevelSetupModel(IConfiguration config) : base(config) { }
+    public DesignationLevelSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblDesignationLevel";
     protected override string IdColumn => "DesignationLevelID";

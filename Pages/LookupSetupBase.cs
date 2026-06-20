@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -15,10 +16,12 @@ public class LookupRecord
 public abstract class LookupSetupPageModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    protected LookupSetupPageModel(IConfiguration config)
+    protected LookupSetupPageModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     protected abstract string TableName { get; }
@@ -39,10 +42,7 @@ public abstract class LookupSetupPageModel : PageModel
     {
         LoadAlert();
         if (editId.HasValue && editId > 0)
-        {
             LoadForEdit(editId.Value);
-        }
-
         LoadRecords();
     }
 
@@ -67,26 +67,27 @@ public abstract class LookupSetupPageModel : PageModel
                     SET {NameColumn} = @Name,
                         {AliasUpdateSql}
                         IsActive = @IsActive,
-                        ModifiedOn = GETDATE()
+                        ModifiedOn = GETDATE(),
+                        ModifiedByUserID = @ModifiedByUserID
                     WHERE {IdColumn} = @Id;", conn);
                 cmd.Parameters.AddWithValue("@Id", itemId);
                 cmd.Parameters.AddWithValue("@Name", itemName.Trim());
                 AddAliasParameter(cmd, aliasName);
                 cmd.Parameters.AddWithValue("@IsActive", isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
-
                 TempData["Alert"] = $"{ItemLabel} updated successfully.";
             }
             else
             {
                 using var cmd = new SqlCommand($@"
-                    INSERT INTO {TableName} ({NameColumn}{AliasInsertColumns}, IsActive)
-                    VALUES (@Name{AliasInsertValues}, @IsActive);", conn);
+                    INSERT INTO {TableName} ({NameColumn}{AliasInsertColumns}, IsActive, CreatedOn, CreatedByUserID)
+                    VALUES (@Name{AliasInsertValues}, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 cmd.Parameters.AddWithValue("@Name", itemName.Trim());
                 AddAliasParameter(cmd, aliasName);
                 cmd.Parameters.AddWithValue("@IsActive", isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
-
                 TempData["Alert"] = $"{ItemLabel} added successfully.";
             }
 
@@ -115,9 +116,11 @@ public abstract class LookupSetupPageModel : PageModel
             using var cmd = new SqlCommand($@"
                 UPDATE {TableName}
                 SET IsActive = 0,
-                    ModifiedOn = GETDATE()
+                    ModifiedOn = GETDATE(),
+                    ModifiedByUserID = @ModifiedByUserID
                 WHERE {IdColumn} = @Id;", conn);
             cmd.Parameters.AddWithValue("@Id", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             cmd.ExecuteNonQuery();
 
             TempData["Alert"] = $"{ItemLabel} removed successfully.";
@@ -187,7 +190,6 @@ public abstract class LookupSetupPageModel : PageModel
     private void AddAliasParameter(SqlCommand cmd, string aliasName)
     {
         if (AliasColumn == null) return;
-
         cmd.Parameters.AddWithValue("@AliasName", string.IsNullOrWhiteSpace(aliasName) ? DBNull.Value : aliasName.Trim());
     }
 
@@ -199,7 +201,6 @@ public abstract class LookupSetupPageModel : PageModel
     private void LoadAlert()
     {
         if (!TempData.ContainsKey("Alert")) return;
-
         AlertMessage = TempData["Alert"]?.ToString() ?? "";
         AlertType = TempData["AlertType"]?.ToString() ?? "success";
     }

@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -21,10 +22,12 @@ public class BankRecord
 public class BankSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public BankSetupModel(IConfiguration config)
+    public BankSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public BankRecord Input { get; set; } = new();
@@ -80,9 +83,11 @@ public class BankSetupModel : PageModel
                         AccountType = @AccountType,
                         AccountVerificationStatus = @AccountVerificationStatus,
                         IsActive = @IsActive,
-                        ModifiedOn = GETDATE()
+                        ModifiedOn = GETDATE(),
+                        ModifiedByUserID = @ModifiedByUserID
                     WHERE BankID = @BankID;", conn);
                 AddSaveParameters(cmd, bankID, bankName, branchCode, branchName, accountTitle, iban, swiftBICCode, accountType, accountVerificationStatus, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
 
                 TempData["Alert"] = "Bank Master record updated successfully.";
@@ -91,10 +96,11 @@ public class BankSetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblBankMaster
-                        (BankName, BranchCode, BranchName, AccountTitle, IBAN, SwiftBICCode, AccountType, AccountVerificationStatus, IsActive)
+                        (BankName, BranchCode, BranchName, AccountTitle, IBAN, SwiftBICCode, AccountType, AccountVerificationStatus, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
-                        (@BankName, @BranchCode, @BranchName, @AccountTitle, @IBAN, @SwiftBICCode, @AccountType, @AccountVerificationStatus, @IsActive);", conn);
+                        (@BankName, @BranchCode, @BranchName, @AccountTitle, @IBAN, @SwiftBICCode, @AccountType, @AccountVerificationStatus, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddSaveParameters(cmd, bankID, bankName, branchCode, branchName, accountTitle, iban, swiftBICCode, accountType, accountVerificationStatus, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
 
                 TempData["Alert"] = "Bank Master record added successfully.";
@@ -124,9 +130,11 @@ public class BankSetupModel : PageModel
             using var cmd = new SqlCommand(@"
                 UPDATE tblBankMaster
                 SET IsActive = 0,
-                    ModifiedOn = GETDATE()
+                    ModifiedOn = GETDATE(),
+                    ModifiedByUserID = @ModifiedByUserID
                 WHERE BankID = @BankID;", conn);
             cmd.Parameters.AddWithValue("@BankID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 

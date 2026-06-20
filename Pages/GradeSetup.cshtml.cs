@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class GradeSetupModel : LookupSetupPageModel
 {
-    public GradeSetupModel(IConfiguration config) : base(config) { }
+    public GradeSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblGrade";
     protected override string IdColumn => "GradeID";

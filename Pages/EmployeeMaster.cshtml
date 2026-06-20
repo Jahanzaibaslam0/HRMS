@@ -12,7 +12,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HRMS – @pageTitle</title>
-    <link rel="stylesheet" href="/css/style.css?v=3" />
+    <link rel="stylesheet" href="/css/style.css?v=5" />
     <style>
         /* ── List view ────────────────────────────────── */
         .emp-list-header {
@@ -42,9 +42,9 @@
             font-size: .78rem;
             font-weight: 600;
         }
-        .chip-total   { background: #e0f2fe; color: #0369a1; }
+        .chip-total   { background: rgba(46,49,146,.12); color: var(--gb-blue); }
         .chip-active  { background: #dcfce7; color: #166534; }
-        .chip-inactive{ background: #fee2e2; color: #991b1b; }
+        .chip-inactive{ background: rgba(227,30,36,.12); color: var(--gb-red-dark); }
         /* ── Form view ────────────────────────────────── */
         .form-breadcrumb {
             display: flex;
@@ -67,6 +67,9 @@
             background: #e0f2fe;
             color: #0369a1;
         }
+        #certificateTable input[type="file"] { font-size: .75rem; max-width: 130px; }
+        #documentTable input[type="file"] { font-size: .75rem; max-width: 130px; }
+        .cert-copy-link, .doc-view-link { font-size: .75rem; color: #0369a1; }
     </style>
 </head>
 <body>
@@ -234,8 +237,9 @@
                     <input type="hidden" name="EditMode"        value="@(Model.EditMode ? "true" : "false")" />
                     <input type="hidden" name="ContactsJson"    id="ContactsJson" />
                     <input type="hidden" name="AddressesJson"   id="AddressesJson" />
-                <input type="hidden" name="FamilyMembersJson" id="FamilyMembersJson" />
+                    <input type="hidden" name="FamilyMembersJson" id="FamilyMembersJson" />
                     <input type="hidden" name="BanksJson"       id="BanksJson" />
+                    <input type="hidden" name="EducationJson"   id="EducationJson" />
 
                 <div class="card-body">
                     <div class="form-grid">
@@ -778,6 +782,15 @@
                                             data-tab-target="familyTab"
                                             onclick="switchProfileTab('familyTab', this)">Family Member</button>
                                     <button type="button" class="profile-tab-btn"
+                                            data-tab-target="educationTab"
+                                            onclick="switchProfileTab('educationTab', this)">Education</button>
+                                    <button type="button" class="profile-tab-btn"
+                                            data-tab-target="certificateTab"
+                                            onclick="switchProfileTab('certificateTab', this)">Certificate</button>
+                                    <button type="button" class="profile-tab-btn"
+                                            data-tab-target="documentTab"
+                                            onclick="switchProfileTab('documentTab', this)">Documents</button>
+                                    <button type="button" class="profile-tab-btn"
                                             data-tab-target="bankTab"
                                             onclick="switchProfileTab('bankTab', this)">Bank Information</button>
                             </div>
@@ -852,6 +865,80 @@
                                                             <th>Name</th><th>Relationship</th><th>Gender</th>
                                                             <th>Date of Birth</th><th>Contact Number</th>
                                                             <th>Dependent</th><th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                    <!-- Education Tab -->
+                                <div class="profile-tab-panel" id="educationTab">
+                                    <div class="card">
+                                        <div class="card-header space-between">
+                                            <h2>Education Details (Multiple)</h2>
+                                            <div>
+                                                <button type="button" class="btn btn-secondary" onclick="addEducationRow()">Add Education</button>
+                                                    <button type="button" class="btn btn-primary"   onclick="submitProfileSection('education')">Save Education</button>
+                                                </div>
+                                        </div>
+                                        <div class="card-body table-responsive">
+                                            <table class="data-table" id="educationTable">
+                                                <thead class="grid-header">
+                                                    <tr>
+                                                            <th>Highest Qualification</th><th>Degree/Certificate</th><th>Specialization</th>
+                                                            <th>Institution</th><th>Year of Passing</th><th>Grade/CGPA</th><th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                    <!-- Certificate Tab -->
+                                <div class="profile-tab-panel" id="certificateTab">
+                                    <div class="card">
+                                        <div class="card-header space-between">
+                                            <h2>Certificate Details (Multiple)</h2>
+                                            <div>
+                                                <button type="button" class="btn btn-secondary" onclick="addCertificateRow()">Add Certificate</button>
+                                                    <button type="button" class="btn btn-primary"   onclick="submitProfileSection('certificates')">Save Certificate</button>
+                                                </div>
+                                        </div>
+                                        <div class="card-body table-responsive">
+                                            <table class="data-table" id="certificateTable">
+                                                <thead class="grid-header">
+                                                    <tr>
+                                                            <th>Certification Name</th><th>Certification Body</th><th>Certificate No</th>
+                                                            <th>Issue Date</th><th>Expiry Date</th><th>Renewal Required</th>
+                                                            <th>Certificate Copy</th><th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                    <!-- Documents Tab -->
+                                <div class="profile-tab-panel" id="documentTab">
+                                    <div class="card">
+                                        <div class="card-header space-between">
+                                            <h2>Employee Documents (Multiple)</h2>
+                                            <div>
+                                                <button type="button" class="btn btn-secondary" onclick="addDocumentRow()">Add Document</button>
+                                                    <button type="button" class="btn btn-primary"   onclick="submitProfileSection('documents')">Save Documents</button>
+                                                </div>
+                                        </div>
+                                        <div class="card-body table-responsive">
+                                            <table class="data-table" id="documentTable">
+                                                <thead class="grid-header">
+                                                    <tr>
+                                                            <th>Document Type</th><th>Document No</th>
+                                                            <th>Issue Date</th><th>Expiry Date</th><th>Remarks</th>
+                                                            <th>Upload / View</th><th>Verified</th><th>Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody></tbody>
@@ -935,13 +1022,35 @@
         <input type="hidden" name="EmployeeCode" id="bankSaveEmployeeCode" />
             <input type="hidden" name="BanksJson"    id="bankSaveJson" />
     </form>
+    <form method="post" id="educationSaveForm" action="/EmployeeMaster?handler=SaveEducation" style="display:none;">
+        @Html.AntiForgeryToken()
+            <input type="hidden" name="EmployeeID"     id="educationSaveEmployeeID" />
+            <input type="hidden" name="EmployeeCode"   id="educationSaveEmployeeCode" />
+            <input type="hidden" name="EducationJson"  id="educationSaveJson" />
+    </form>
+    <form method="post" id="certificateSaveForm" action="/EmployeeMaster?handler=SaveCertificates" enctype="multipart/form-data" style="display:none;">
+        @Html.AntiForgeryToken()
+            <input type="hidden" name="EmployeeID"        id="certificateSaveEmployeeID" />
+            <input type="hidden" name="EmployeeCode"      id="certificateSaveEmployeeCode" />
+            <input type="hidden" name="CertificatesJson"  id="certificateSaveJson" />
+    </form>
+    <form method="post" id="documentSaveForm" action="/EmployeeMaster?handler=SaveDocuments" enctype="multipart/form-data" style="display:none;">
+        @Html.AntiForgeryToken()
+            <input type="hidden" name="EmployeeID"     id="documentSaveEmployeeID" />
+            <input type="hidden" name="EmployeeCode"   id="documentSaveEmployeeCode" />
+            <input type="hidden" name="DocumentsJson"  id="documentSaveJson" />
+    </form>
 
         <script id="initialContactsData"  type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ContactRecords))</script>
     <script id="initialAddressesData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AddressRecords))</script>
         <script id="initialFamilyData"    type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.FamilyRecords))</script>
+        <script id="initialEducationData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EducationRecords))</script>
+        <script id="initialCertificatesData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CertificateRecords))</script>
+        <script id="initialDocumentsData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DocumentRecords))</script>
         <script id="initialBanksData"     type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BankRecords))</script>
         <script id="bankLookupData"       type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Banks))</script>
-    <script src="/js/app.js?v=202606101443"></script>
+        <script id="documentTypeLookupData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DocumentTypes))</script>
+    <script src="/js/app.js?v=202606191600"></script>
 
         <script>
             function formatTenureFromDate(dateStr) {

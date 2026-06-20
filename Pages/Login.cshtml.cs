@@ -7,8 +7,13 @@ namespace HRMS.Pages;
 public class LoginModel : PageModel
 {
     private readonly AuthService _auth;
+    private readonly AuditService _audit;
 
-    public LoginModel(AuthService auth) => _auth = auth;
+    public LoginModel(AuthService auth, AuditService audit)
+    {
+        _auth = auth;
+        _audit = audit;
+    }
 
     [BindProperty] public string Username { get; set; } = "";
     [BindProperty] public string Password { get; set; } = "";
@@ -32,15 +37,19 @@ public class LoginModel : PageModel
         var result = _auth.Login(Username, Password);
         if (!result.Success)
         {
+            _audit.LogLogin(Username.Trim(), false, message: result.Message);
             ErrorMessage = result.Message;
             return Page();
         }
 
+        HttpContext.Session.SetInt32("ShowNotificationPopup", 1);
+        HttpContext.Session.SetInt32("ShowMemorandumPopup", 1);
         return Redirect(ReturnUrl);
     }
 
     public IActionResult OnGetLogout()
     {
+        _audit.LogLogout();
         _auth.Logout();
         return RedirectToPage("/Login");
     }

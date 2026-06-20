@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class CostCenterSetupModel : LookupSetupPageModel
 {
-    public CostCenterSetupModel(IConfiguration config) : base(config) { }
+    public CostCenterSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblCostCenter";
     protected override string IdColumn => "CostCenterID";

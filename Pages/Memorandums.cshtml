@@ -1,0 +1,143 @@
+@page
+@model HRMS.Pages.MemorandumsModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+    <style>
+        .memo-layout { display: grid; grid-template-columns: 320px 1fr; gap: 1rem; }
+        .memo-list { list-style: none; padding: 0; margin: 0; }
+        .memo-list li a {
+            display: block;
+            padding: .75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--text-dark);
+        }
+        .memo-list li a:hover, .memo-list li a.active {
+            background: rgba(46,49,146,.08);
+            border-left: 3px solid var(--gb-red);
+        }
+        .memo-detail-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .75rem;
+            margin-bottom: 1rem;
+            font-size: .82rem;
+            color: var(--text-muted);
+        }
+        .memo-detail-body { white-space: pre-wrap; line-height: 1.7; margin-bottom: 1rem; }
+        .memo-doc-panel {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f8f9ff;
+        }
+        .memo-doc-panel h4 { margin: 0 0 .75rem; color: var(--gb-blue); font-size: .95rem; }
+        .memo-doc-viewer {
+            width: 100%;
+            min-height: 480px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #fff;
+        }
+        .memo-doc-image { max-width: 100%; border-radius: 6px; border: 1px solid var(--border); }
+        @@media (max-width: 900px) {
+            .memo-layout { grid-template-columns: 1fr; }
+            .memo-doc-viewer { min-height: 320px; }
+        }
+    </style>
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        <div class="memo-layout">
+            <div class="card">
+                <div class="card-header"><h2>Active Memorandums</h2></div>
+                <div class="card-body" style="padding:0;">
+                    @if (Model.ActiveMemorandums.Count == 0)
+                    {
+                        <p style="padding:1rem; color:var(--text-muted);">No active memorandums at this time.</p>
+                    }
+                    else
+                    {
+                        <ul class="memo-list">
+                            @foreach (var m in Model.ActiveMemorandums)
+                            {
+                                <li>
+                                    <a href="/Memorandums?id=@m.MemorandumID"
+                                       class="@(Model.Selected?.MemorandumID == m.MemorandumID ? "active" : "")">
+                                        <strong>@m.Name</strong>
+                                        @if (m.HasDocument)
+                                        {
+                                            <span style="font-size:.7rem; color:var(--gb-red); margin-left:.35rem;">[Doc]</span>
+                                        }
+                                        <div style="font-size:.75rem; color:var(--text-muted); margin-top:.2rem;">
+                                            @m.StartDate.ToString("dd-MMM-yyyy") – @m.ValidTillDate.ToString("dd-MMM-yyyy")
+                                        </div>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h2>Memorandum Details</h2></div>
+                <div class="card-body">
+                    @if (Model.Selected == null)
+                    {
+                        <p style="color:var(--text-muted);">Select a memorandum to view details.</p>
+                    }
+                    else
+                    {
+                        <h3 style="margin-bottom:.5rem; color:var(--gb-blue);">@Model.Selected.Name</h3>
+                        <div class="memo-detail-meta">
+                            <span><strong>ID:</strong> @Model.Selected.MemorandumID</span>
+                            <span><strong>Department:</strong> @Model.Selected.DepartmentName</span>
+                            <span><strong>Start:</strong> @Model.Selected.StartDate.ToString("dd-MMM-yyyy")</span>
+                            <span><strong>Valid Till:</strong> @Model.Selected.ValidTillDate.ToString("dd-MMM-yyyy")</span>
+                            <span><strong>Status:</strong> @(Model.Selected.IsActive ? "Active" : "Inactive")</span>
+                        </div>
+                        <div class="memo-detail-body">@Model.Selected.Description</div>
+
+                        @if (Model.Selected.HasDocument)
+                        {
+                            var ext = System.IO.Path.GetExtension(Model.Selected.OriginalFileName).ToLowerInvariant();
+                            var isPdf = ext == ".pdf";
+                            var isImage = ext is ".png" or ".jpg" or ".jpeg";
+                            <div class="memo-doc-panel">
+                                <h4>Attached Document</h4>
+                                <p style="margin-bottom:.75rem;">
+                                    <a href="@Model.Selected.DocumentPath" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size:.82rem;">
+                                        Open @Model.Selected.OriginalFileName
+                                    </a>
+                                </p>
+                                @if (isPdf)
+                                {
+                                    <iframe src="@Model.Selected.DocumentPath" class="memo-doc-viewer" title="Memorandum document"></iframe>
+                                }
+                                else if (isImage)
+                                {
+                                    <img src="@Model.Selected.DocumentPath" alt="@Model.Selected.OriginalFileName" class="memo-doc-image" />
+                                }
+                                else
+                                {
+                                    <p style="color:var(--text-muted); font-size:.85rem;">Preview not available for this file type. Use <strong>Open</strong> to download or view in your application.</p>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </main>
+    @await Html.PartialAsync("_AppFooter")
+</body>
+</html>

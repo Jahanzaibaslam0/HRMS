@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class RegionSetupModel : LookupSetupPageModel
 {
-    public RegionSetupModel(IConfiguration config) : base(config) { }
+    public RegionSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblRegion";
     protected override string IdColumn => "RegionID";

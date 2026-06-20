@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -16,10 +17,12 @@ public class ProvinceRecord
 public class ProvinceSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public ProvinceSetupModel(IConfiguration config)
+    public ProvinceSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Province Setup";
@@ -62,18 +65,20 @@ public class ProvinceSetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     UPDATE tblProvince SET ProvinceCode = @Code, ProvinceName = @Name, AliasName = @AliasName,
-                        IsActive = @IsActive, ModifiedOn = GETDATE()
+                        IsActive = @IsActive, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                     WHERE ProvinceID = @ID;", conn);
                 AddParams(cmd, provinceID, provinceCode, provinceName, aliasName, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Province updated successfully.";
             }
             else
             {
                 using var cmd = new SqlCommand(@"
-                    INSERT INTO tblProvince (ProvinceCode, ProvinceName, AliasName, IsActive)
-                    VALUES (@Code, @Name, @AliasName, @IsActive);", conn);
+                    INSERT INTO tblProvince (ProvinceCode, ProvinceName, AliasName, IsActive, CreatedOn, CreatedByUserID)
+                    VALUES (@Code, @Name, @AliasName, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, provinceCode, provinceName, aliasName, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Province added successfully.";
             }
@@ -99,8 +104,9 @@ public class ProvinceSetupModel : PageModel
         try
         {
             using var conn = new SqlConnection(_conn);
-            using var cmd = new SqlCommand(@"UPDATE tblProvince SET IsActive = 0, ModifiedOn = GETDATE() WHERE ProvinceID = @ID;", conn);
+            using var cmd = new SqlCommand(@"UPDATE tblProvince SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID WHERE ProvinceID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
             TempData["Alert"] = "Province removed successfully.";

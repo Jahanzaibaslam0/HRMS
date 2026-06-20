@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -20,10 +21,12 @@ public class ExtensionRecord
 public class ExtensionSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public ExtensionSetupModel(IConfiguration config)
+    public ExtensionSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Extension Master Setup";
@@ -81,10 +84,12 @@ public class ExtensionSetupModel : PageModel
                         DepartmentID    = @DepartmentID,
                         LocationID      = @LocationID,
                         IsActive        = @IsActive,
-                        ModifiedOn      = GETDATE()
+                        ModifiedOn      = GETDATE(),
+                        ModifiedByUserID = @ModifiedByUserID
                     WHERE ExtensionID = @ID;", conn);
                 AddParams(cmd, extensionID, extensionCode, extensionName, aliasName,
                     departmentID, locationID, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Extension updated successfully.";
             }
@@ -92,11 +97,12 @@ public class ExtensionSetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblExtension
-                        (ExtensionCode, ExtensionName, AliasName, DepartmentID, LocationID, IsActive)
+                        (ExtensionCode, ExtensionName, AliasName, DepartmentID, LocationID, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
-                        (@Code, @Name, @AliasName, @DepartmentID, @LocationID, @IsActive);", conn);
+                        (@Code, @Name, @AliasName, @DepartmentID, @LocationID, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, extensionCode, extensionName, aliasName,
                     departmentID, locationID, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Extension added successfully.";
             }
@@ -125,9 +131,10 @@ public class ExtensionSetupModel : PageModel
         {
             using var conn = new SqlConnection(_conn);
             using var cmd = new SqlCommand(@"
-                UPDATE tblExtension SET IsActive = 0, ModifiedOn = GETDATE()
+                UPDATE tblExtension SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE ExtensionID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 

@@ -9,7 +9,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HRMS - @Model.PageTitle</title>
-    <link rel="stylesheet" href="/css/style.css?v=3" />
+    <link rel="stylesheet" href="/css/style.css?v=5" />
 </head>
 <body>
     @await Html.PartialAsync("_AppHeader", Model.PageTitle)
@@ -102,6 +102,23 @@
                             <input type="text" name="itemName" class="form-control" value="@Model.Input.Name" maxlength="100" />
                         </div>
                         <div class="form-group">
+                            <label>Department Manager</label>
+                            <select name="departmentManagerID" class="form-control">
+                                <option value="">-- Select Employee --</option>
+                                @foreach (var employee in Model.Employees)
+                                {
+                                    if (Model.Input.DepartmentManagerID == employee.Id)
+                                    {
+                                        <option value="@employee.Id" selected>@employee.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@employee.Id">@employee.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label>Alias</label>
                             <input type="text" name="aliasName" class="form-control" value="@Model.Input.AliasName" maxlength="50" />
                         </div>
@@ -134,6 +151,7 @@
                             <th>Business Segment</th>
                             <th>Business Unit</th>
                             <th>Department</th>
+                            <th>Department Manager</th>
                             <th>Alias</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -142,7 +160,7 @@
                     <tbody>
                         @if (Model.Records.Count == 0)
                         {
-                            <tr class="empty-row"><td colspan="8">No records found.</td></tr>
+                            <tr class="empty-row"><td colspan="9">No records found.</td></tr>
                         }
                         else
                         {
@@ -154,6 +172,7 @@
                                     <td>@item.BusinessSegmentName</td>
                                     <td>@item.BusinessUnitName</td>
                                     <td>@item.Name</td>
+                                    <td>@item.DepartmentManagerName</td>
                                     <td>@item.AliasName</td>
                                     <td><span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span></td>
                                     <td class="actions-col">

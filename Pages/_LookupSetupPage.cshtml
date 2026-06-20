@@ -1,11 +1,11 @@
-﻿@model HRMS.Pages.LookupSetupPageModel
+@model HRMS.Pages.LookupSetupPageModel
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HRMS - @Model.PageTitle</title>
-    <link rel="stylesheet" href="/css/style.css?v=3" />
+    <link rel="stylesheet" href="/css/style.css?v=5" />
 </head>
 <body>
     @await Html.PartialAsync("_AppHeader", Model.PageTitle)
@@ -69,7 +69,8 @@
                                     <td><span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span></td>
                                     <td class="actions-col">
                                         <a class="btn-icon btn-edit" href="@($"{Model.PagePath}?editId={item.Id}")" title="Edit">Edit</a>
-                                        <form method="post" action="@($"{Model.PagePath}?handler=Delete")" style="display:inline">
+                                        <form method="post" action="@($"{Model.PagePath}?handler=Delete")" style="display:inline"
+                                              data-delete-message="Are you sure you want to delete this @Model.ItemLabel.ToLower()? This action cannot be undone.">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="deleteId" value="@item.Id" />
                                             <button type="submit" class="btn-icon btn-delete" title="Remove">X</button>

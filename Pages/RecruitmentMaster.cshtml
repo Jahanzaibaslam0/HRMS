@@ -1,0 +1,402 @@
+@page
+@model HRMS.Pages.RecruitmentMasterModel
+@{
+    Layout = null;
+    var pageTitle = Model.ShowForm
+        ? (Model.EditMode ? "Edit Recruitment" : "New Recruitment")
+        : "Recruitment Process";
+    var i = Model.Input;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS – @pageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+    <style>
+        .rec-list-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
+        .rec-list-header .right-controls { display:flex; align-items:center; gap:.6rem; }
+        .form-breadcrumb { display:flex; align-items:center; gap:.75rem; margin-bottom:1rem; padding:.5rem .75rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; }
+        .audit-panel { background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:.75rem 1rem; }
+        .audit-panel .audit-row { display:flex; gap:2rem; flex-wrap:wrap; font-size:.875rem; }
+        .audit-panel .audit-label { color:#64748b; font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; }
+    </style>
+</head>
+<body>
+
+    @await Html.PartialAsync("_AppHeader", pageTitle)
+
+    <main class="container">
+
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        @if (!Model.ShowForm)
+        {
+            <div class="card">
+                <div class="card-header rec-list-header">
+                    <h2>Recruitment List</h2>
+                    <div class="right-controls">
+                        <input type="text" class="form-control" style="width:280px"
+                               placeholder="Search candidate / position / req #…"
+                               onkeyup="searchRecTable(this.value)" />
+                        <a href="/RecruitmentMaster?newRecord=true" class="btn btn-primary">+ New Recruitment</a>
+                    </div>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="data-table" id="recTable">
+                        <thead class="grid-header">
+                            <tr>
+                                <th>#</th>
+                                <th>Req #</th>
+                                <th>Candidate</th>
+                                <th>Position</th>
+                                <th>Department</th>
+                                <th>Source</th>
+                                <th>Interview</th>
+                                <th>Joining</th>
+                                <th>Onboarding</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Records.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="10" style="text-align:center;padding:2rem;color:#6b7280;">
+                                        No recruitment records found.
+                                        <br />
+                                        <a href="/RecruitmentMaster?newRecord=true" class="btn btn-primary" style="margin-top:.75rem;">+ Add First Record</a>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                int n = 0;
+                                foreach (var r in Model.Records)
+                                {
+                                    n++;
+                                    <tr class="@(n % 2 == 0 ? "grid-alt-row" : "grid-row")">
+                                        <td>@n</td>
+                                        <td><strong>@(string.IsNullOrEmpty(r.JobRequisitionNumber) ? "#" + r.RecruitmentID : r.JobRequisitionNumber)</strong></td>
+                                        <td>@r.CandidateName</td>
+                                        <td>@r.PositionTitle</td>
+                                        <td>@r.DepartmentName</td>
+                                        <td>@r.RecruitmentSource</td>
+                                        <td><span class="badge badge-info">@r.InterviewStatus</span></td>
+                                        <td>@r.JoiningDate?.ToString("dd MMM yyyy")</td>
+                                        <td><span class="badge badge-warning">@r.OnboardingStatus</span></td>
+                                        <td style="white-space:nowrap;">
+                                            <a href="/RecruitmentMaster?editId=@r.RecruitmentID" class="btn btn-secondary" style="padding:3px 12px;font-size:.8rem;">Edit</a>
+                                            <form method="post" asp-page-handler="Delete" style="display:inline"
+                                                  onsubmit="return confirm('Delete this recruitment record?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="deleteId" value="@r.RecruitmentID" />
+                                                <button type="submit" class="btn btn-danger" style="padding:3px 10px;font-size:.8rem;">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer"><span class="record-count">Total Records: @Model.Records.Count</span></div>
+            </div>
+        }
+        else
+        {
+            <div class="form-breadcrumb">
+                <a href="/RecruitmentMaster" class="btn btn-secondary" style="padding:4px 14px;">&#8592; Back to List</a>
+                <span style="color:#9ca3af;">/</span>
+                <strong>@(Model.EditMode ? "Edit Recruitment" : "New Recruitment")</strong>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h2>Recruitment Record</h2></div>
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Input.RecruitmentID" value="@i.RecruitmentID" />
+                    <input type="hidden" name="EditMode" value="@(Model.EditMode ? "true" : "false")" />
+
+                    <div class="card-body">
+                        <div class="form-grid">
+
+                            <div class="form-group full-width"><h3 class="form-section-title">Section 1: Requisition Details</h3></div>
+                            <div class="form-group">
+                                <label>Job Requisition Number</label>
+                                <input type="text" name="Input.JobRequisitionNumber" class="form-control" maxlength="50" value="@i.JobRequisitionNumber" />
+                            </div>
+                            <div class="form-group">
+                                <label>Recruitment Source</label>
+                                <select name="Input.RecruitmentSource" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var s in Model.RecruitmentSourceOptions)
+                                    {
+                                        <option value="@s" selected="@(i.RecruitmentSource == s)">@s</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Position Title</label>
+                                <input type="text" name="Input.PositionTitle" class="form-control" maxlength="200" value="@i.PositionTitle" />
+                            </div>
+                            <div class="form-group">
+                                <label>Department</label>
+                                <select name="Input.DepartmentID" class="form-control">
+                                    <option value="0">-- Select --</option>
+                                    @foreach (var d in Model.Departments)
+                                    {
+                                        <option value="@d.Id" selected="@(i.DepartmentID == d.Id)">@d.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Hiring Manager</label>
+                                <select name="Input.HiringManagerEmployeeID" class="form-control">
+                                    <option value="0">-- Select --</option>
+                                    @foreach (var e in Model.Employees)
+                                    {
+                                        <option value="@e.Id" selected="@(i.HiringManagerEmployeeID == e.Id)">@e.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width"><h3 class="form-section-title">Section 2: Candidate Information</h3></div>
+                            <div class="form-group">
+                                <label>Candidate Name <span class="required">*</span></label>
+                                <input type="text" name="Input.CandidateName" class="form-control" maxlength="200" required value="@i.CandidateName" />
+                            </div>
+                            <div class="form-group">
+                                <label>Personal Email</label>
+                                <input type="email" name="Input.PersonalEmail" class="form-control" maxlength="150" value="@i.PersonalEmail" />
+                            </div>
+                            <div class="form-group">
+                                <label>Personal Phone</label>
+                                <input type="text" name="Input.PersonalPhone" class="form-control" maxlength="30" value="@i.PersonalPhone" />
+                            </div>
+                            <div class="form-group">
+                                <label>Application Date</label>
+                                <input type="date" name="Input.ApplicationDate" class="form-control" value="@i.ApplicationDate" />
+                            </div>
+
+                            <div class="form-group full-width"><h3 class="form-section-title">Section 3: Interview &amp; Selection</h3></div>
+                            <div class="form-group">
+                                <label>Interview Date</label>
+                                <input type="date" name="Input.InterviewDate" class="form-control" value="@i.InterviewDate" />
+                            </div>
+                            <div class="form-group">
+                                <label>Interview Status</label>
+                                <select name="Input.InterviewStatus" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var s in Model.InterviewStatusOptions)
+                                    {
+                                        <option value="@s" selected="@(i.InterviewStatus == s)">@s</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Selection Date</label>
+                                <input type="date" name="Input.SelectionDate" class="form-control" value="@i.SelectionDate" />
+                            </div>
+
+                            <div class="form-group full-width"><h3 class="form-section-title">Section 4: Offer Details</h3></div>
+                            <div class="form-group">
+                                <label>Offer Letter Number</label>
+                                <input type="text" name="Input.OfferLetterNumber" class="form-control" maxlength="50" value="@i.OfferLetterNumber" />
+                            </div>
+                            <div class="form-group">
+                                <label>Offered Salary</label>
+                                <input type="number" name="Input.OfferedSalary" class="form-control" step="0.01" min="0" value="@i.OfferedSalary" />
+                            </div>
+                            <div class="form-group">
+                                <label>Offer Date</label>
+                                <input type="date" name="Input.OfferDate" class="form-control" value="@i.OfferDate" />
+                            </div>
+                            <div class="form-group">
+                                <label>Offer Accepted Date</label>
+                                <input type="date" name="Input.OfferAcceptedDate" class="form-control" value="@i.OfferAcceptedDate" />
+                            </div>
+
+                            <div class="form-group full-width"><h3 class="form-section-title">Section 5: Verification</h3></div>
+                            <div class="form-group">
+                                <label>Background Verification Status</label>
+                                <select name="Input.BackgroundVerificationStatus" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var s in Model.VerificationStatusOptions)
+                                    {
+                                        <option value="@s" selected="@(i.BackgroundVerificationStatus == s)">@s</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Reference Check Status</label>
+                                <select name="Input.ReferenceCheckStatus" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var s in Model.VerificationStatusOptions)
+                                    {
+                                        <option value="@s" selected="@(i.ReferenceCheckStatus == s)">@s</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width"><h3 class="form-section-title">Section 6: Onboarding</h3></div>
+                            <div class="form-group">
+                                <label>Onboarding Status</label>
+                                <select name="Input.OnboardingStatus" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var s in Model.OnboardingStatusOptions)
+                                    {
+                                        <option value="@s" selected="@(i.OnboardingStatus == s)">@s</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Joining Date</label>
+                                <input type="date" name="Input.JoiningDate" class="form-control" value="@i.JoiningDate" />
+                            </div>
+                            <div class="form-group">
+                                <label>Induction Completed</label>
+                                <select name="Input.InductionCompleted" class="form-control">
+                                    <option value="false" selected="@(!i.InductionCompleted)">No</option>
+                                    <option value="true" selected="@(i.InductionCompleted)">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Induction Date</label>
+                                <input type="date" name="Input.InductionDate" class="form-control" value="@i.InductionDate" />
+                            </div>
+                            <div class="form-group">
+                                <label>Documents Submitted</label>
+                                <select name="Input.DocumentsSubmitted" class="form-control">
+                                    <option value="false" selected="@(!i.DocumentsSubmitted)">No</option>
+                                    <option value="true" selected="@(i.DocumentsSubmitted)">Yes</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width"><h3 class="form-section-title">Section 7: IT &amp; Assets</h3></div>
+                            <div class="form-group">
+                                <label>System Access Provided</label>
+                                <select name="Input.SystemAccessProvided" class="form-control">
+                                    <option value="false" selected="@(!i.SystemAccessProvided)">No</option>
+                                    <option value="true" selected="@(i.SystemAccessProvided)">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Official Email Created</label>
+                                <input type="email" name="Input.OfficialEmailCreated" class="form-control" maxlength="150" value="@i.OfficialEmailCreated" />
+                            </div>
+                            <div class="form-group">
+                                <label>Equipment Issued</label>
+                                <select name="Input.EquipmentIssued" class="form-control">
+                                    <option value="false" selected="@(!i.EquipmentIssued)">No</option>
+                                    <option value="true" selected="@(i.EquipmentIssued)">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Asset Details</label>
+                                <textarea name="Input.AssetDetails" class="form-control" rows="2" maxlength="500" placeholder="Laptop ID, phone, accessories…">@i.AssetDetails</textarea>
+                            </div>
+
+                            <div class="form-group full-width"><h3 class="form-section-title">Section 8: Training &amp; Integration</h3></div>
+                            <div class="form-group">
+                                <label>Training Schedule Assigned</label>
+                                <select name="Input.TrainingScheduleAssigned" class="form-control">
+                                    <option value="false" selected="@(!i.TrainingScheduleAssigned)">No</option>
+                                    <option value="true" selected="@(i.TrainingScheduleAssigned)">Yes</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Buddy / Mentor Assigned</label>
+                                <select name="Input.BuddyMentorEmployeeID" class="form-control">
+                                    <option value="0">-- Select --</option>
+                                    @foreach (var e in Model.Employees)
+                                    {
+                                        <option value="@e.Id" selected="@(i.BuddyMentorEmployeeID == e.Id)">@e.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width"><h3 class="form-section-title">Section 9: Probation</h3></div>
+                            <div class="form-group">
+                                <label>Probation Period</label>
+                                <select name="Input.ProbationPeriod" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var p in Model.ProbationPeriodOptions)
+                                    {
+                                        <option value="@p" selected="@(i.ProbationPeriod == p)">@p</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Probation Review Schedule</label>
+                                <input type="date" name="Input.ProbationReviewSchedule" class="form-control" value="@i.ProbationReviewSchedule" />
+                            </div>
+                            <div class="form-group">
+                                <label>Confirmation Status</label>
+                                <select name="Input.ConfirmationStatus" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var s in Model.ConfirmationStatusOptions)
+                                    {
+                                        <option value="@s" selected="@(i.ConfirmationStatus == s)">@s</option>
+                                    }
+                                </select>
+                            </div>
+
+                            @if (Model.EditMode)
+                            {
+                                <div class="form-group full-width">
+                                    <h3 class="form-section-title">Section 10: Audit Info</h3>
+                                    <div class="audit-panel">
+                                        <div class="audit-row">
+                                            <div>
+                                                <div class="audit-label">Created By</div>
+                                                <div>@(string.IsNullOrEmpty(Model.Audit.CreatedBy) ? "—" : Model.Audit.CreatedBy)</div>
+                                            </div>
+                                            <div>
+                                                <div class="audit-label">Created Date</div>
+                                                <div>@(string.IsNullOrEmpty(Model.Audit.CreatedDate) ? "—" : Model.Audit.CreatedDate)</div>
+                                            </div>
+                                            <div>
+                                                <div class="audit-label">Updated By</div>
+                                                <div>@(string.IsNullOrEmpty(Model.Audit.UpdatedBy) ? "—" : Model.Audit.UpdatedBy)</div>
+                                            </div>
+                                            <div>
+                                                <div class="audit-label">Updated Date</div>
+                                                <div>@(string.IsNullOrEmpty(Model.Audit.UpdatedDate) ? "—" : Model.Audit.UpdatedDate)</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+
+                    <div class="card-footer" style="display:flex;gap:.75rem;">
+                        <button type="submit" class="btn btn-primary">@(Model.EditMode ? "Update Recruitment" : "Save Recruitment")</button>
+                        <a href="/RecruitmentMaster" class="btn btn-secondary">&#8592; Back to List</a>
+                    </div>
+                </form>
+            </div>
+        }
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+
+    @if (!Model.ShowForm)
+    {
+        <script>
+            function searchRecTable(q) {
+                q = q.toLowerCase();
+                document.querySelectorAll('#recTable tbody tr').forEach(function (row) {
+                    row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+                });
+            }
+        </script>
+    }
+</body>
+</html>

@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class GenderSetupModel : LookupSetupPageModel
 {
-    public GenderSetupModel(IConfiguration config) : base(config) { }
+    public GenderSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblGender";
     protected override string IdColumn => "GenderID";

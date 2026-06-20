@@ -7,9 +7,7 @@
     <div class="app-brand-band">
 
         <a href="/EmployeeMaster" class="app-logo" aria-label="HRMS Home">
-
-            <span class="app-logo-mark">HR</span>
-
+            <img src="/images/gb-logo.png" alt="Ghazi Brothers" class="app-logo-img" />
         </a>
 
         <div class="app-title-block">
@@ -28,7 +26,7 @@
 
             {
 
-                <span style="font-size:.82rem; color:#c8dfc8; margin-right:.75rem;">
+                <span class="user-info">
 
                     @Auth.CurrentUsername
 
@@ -50,7 +48,11 @@
 
         <a href="/EmployeeMaster" class="nav-link">Employee Master</a>
 
-        <a href="/EmployeeReport" class="nav-link">Internal Employee Directory</a>
+        <a href="/QuickLinks" class="nav-link">Quick Links</a>
+
+        <a href="/Notifications" class="nav-link">Notifications</a>
+
+        <a href="/Memorandums" class="nav-link">Memorandums</a>
 
         <div class="nav-menu">
 
@@ -110,6 +112,12 @@
 
                 <a href="/LocationSetup">Location</a>
 
+                <a href="/SoftwareLinkSetup">Software Link</a>
+
+                <a href="/NotificationSetup">Notification Setup</a>
+
+                <a href="/MemorandumSetup">Memorandum Setup</a>
+
             </div>
 
         </div>
@@ -148,6 +156,8 @@
 
                 <a href="/WorkerLocationSetup">Worker Location</a>
 
+                <a href="/DocumentTypeSetup">Document Type</a>
+
             </div>
 
         </div>
@@ -168,6 +178,11 @@
 
                 <a href="/UserRightsSetup">User Rights</a>
 
+                @if (Auth.IsAdmin)
+                {
+                    <a href="/AuditReport">Audit Log Report</a>
+                }
+
             </div>
 
         </div>
@@ -175,6 +190,8 @@
     </nav>
 
 </header>
+
+@await Html.PartialAsync("_NotificationPopup")
 
 <script>
 
@@ -230,7 +247,8 @@
 
             '/citysetup', '/provincesetup', '/salesgroupsetup',
 
-            '/departmentsetup', '/regionsetup', '/locationsetup'
+            '/departmentsetup', '/regionsetup', '/locationsetup', '/softwarelinksetup',
+            '/notificationsetup', '/memorandumsetup'
 
         ];
 
@@ -242,11 +260,17 @@
 
             '/benefitsetup', '/benefitentitlementsetup', '/expensecategorysetup', '/bloodgroupsetup',
 
-            '/workercategorysetup', '/jobsetup', '/workerlocationsetup'
+            '/workercategorysetup', '/jobsetup', '/workerlocationsetup', '/documenttypesetup'
 
         ];
 
-        var secPaths = ['/usersetup', '/userrightssetup'];
+        var secPaths = ['/usersetup', '/userrightssetup', '/auditreport'];
+        var quickLinkPaths = ['/quicklinks', '/expensemaster', '/performancemaster', '/recruitmentmaster', '/trainingmaster', '/employeereport'];
+
+        if (quickLinkPaths.indexOf(currentPath) >= 0) {
+            var ql = document.querySelector('.app-nav a[href="/QuickLinks"]');
+            if (ql) ql.classList.add('active');
+        }
 
 
 

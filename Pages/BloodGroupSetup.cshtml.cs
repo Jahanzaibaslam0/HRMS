@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class BloodGroupSetupModel : LookupSetupPageModel
 {
-    public BloodGroupSetupModel(IConfiguration config) : base(config) { }
+    public BloodGroupSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblBloodGroup";
     protected override string IdColumn => "BloodGroupID";

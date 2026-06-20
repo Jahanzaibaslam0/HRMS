@@ -1,0 +1,116 @@
+@page
+@model HRMS.Pages.SoftwareLinkSetupModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.SoftwareLinkID > 0 ? "Edit Software Link" : "Add Software Link")</h2>
+            </div>
+            <form method="post" asp-page-handler="Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="softwareLinkID" value="@Model.Input.SoftwareLinkID" />
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Software Name <span class="required">*</span></label>
+                            <input type="text" name="softwareName" class="form-control" value="@Model.Input.SoftwareName" maxlength="100" placeholder="e.g. Microsoft Power BI" />
+                        </div>
+                        <div class="form-group">
+                            <label>Software URL <span class="required">*</span></label>
+                            <input type="url" name="softwareUrl" class="form-control" value="@Model.Input.SoftwareUrl" maxlength="500" placeholder="https://..." />
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <input type="text" name="category" class="form-control" value="@Model.Input.Category" maxlength="50" placeholder="e.g. Analytics, ERP, Communication" />
+                        </div>
+                        <div class="form-group">
+                            <label>Sort Order</label>
+                            <input type="number" name="sortOrder" class="form-control" value="@(Model.Input.SortOrder <= 0 ? 1 : Model.Input.SortOrder)" min="1" />
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true" @(Model.Input.IsActive ? "checked" : "") />
+                                Active
+                            </label>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Description</label>
+                            <textarea name="description" class="form-control" maxlength="250" rows="2" placeholder="Brief description shown on Quick Links page">@Model.Input.Description</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.Input.SoftwareLinkID > 0 ? "Update" : "Save")</button>
+                    <a href="/SoftwareLinkSetup" class="btn btn-secondary">Clear</a>
+                    <a href="/QuickLinks" class="btn btn-secondary">View Quick Links</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header"><h2>Software Link List</h2></div>
+            <div class="card-body table-responsive">
+                <table class="data-table">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>Order</th>
+                            <th>Software</th>
+                            <th>URL</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="7">No records found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Records)
+                            {
+                                <tr>
+                                    <td>@item.SortOrder</td>
+                                    <td>@item.SoftwareName</td>
+                                    <td><a href="@item.SoftwareUrl" target="_blank" rel="noopener noreferrer">@item.SoftwareUrl</a></td>
+                                    <td>@item.Category</td>
+                                    <td>@item.Description</td>
+                                    <td><span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span></td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/SoftwareLinkSetup?editId=@item.SoftwareLinkID" title="Edit">Edit</a>
+                                        <form method="post" asp-page-handler="Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.SoftwareLinkID" />
+                                            <button type="submit" class="btn-icon btn-delete" title="Remove">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    @await Html.PartialAsync("_AppFooter")
+</body>
+</html>

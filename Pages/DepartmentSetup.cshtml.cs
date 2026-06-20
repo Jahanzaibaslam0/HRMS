@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -15,6 +16,8 @@ public class DepartmentRecord
     public string BusinessSegmentName { get; set; } = "";
     public int    BusinessUnitID      { get; set; }
     public string BusinessUnitName    { get; set; } = "";
+    public int    DepartmentManagerID   { get; set; }
+    public string DepartmentManagerName { get; set; } = "";
     public string Name                { get; set; } = "";
     public string AliasName           { get; set; } = "";
     public bool   IsActive            { get; set; } = true;
@@ -23,10 +26,12 @@ public class DepartmentRecord
 public class DepartmentSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public DepartmentSetupModel(IConfiguration config)
+    public DepartmentSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Department Setup";
@@ -36,6 +41,7 @@ public class DepartmentSetupModel : PageModel
     public List<LookupItem> Wings            { get; set; } = new();
     public List<LookupItem> BusinessSegments { get; set; } = new();
     public List<LookupItem> BusinessUnits    { get; set; } = new();
+    public List<LookupItem> Employees        { get; set; } = new();
     public string AlertMessage { get; set; } = "";
     public string AlertType { get; set; } = "success";
 
@@ -54,7 +60,7 @@ public class DepartmentSetupModel : PageModel
 
     public IActionResult OnPostSave(
         int itemId, int divisionID, int wingID, int businessSegmentID, int businessUnitID,
-        string itemName, string aliasName, bool isActive)
+        int departmentManagerID, string itemName, string aliasName, bool isActive)
     {
         if (string.IsNullOrWhiteSpace(itemName))
         {
@@ -76,12 +82,15 @@ public class DepartmentSetupModel : PageModel
                         WingID = @WingID,
                         BusinessSegmentID = @BusinessSegmentID,
                         BusinessUnitID = @BusinessUnitID,
+                        DepartmentManagerID = @DepartmentManagerID,
                         DepartmentName = @DepartmentName,
                         AliasName = @AliasName,
                         IsActive = @IsActive,
-                        ModifiedOn = GETDATE()
+                        ModifiedOn = GETDATE(),
+                        ModifiedByUserID = @ModifiedByUserID
                     WHERE DepartmentID = @DepartmentID;", conn);
-                AddSaveParameters(cmd, itemId, divisionID, wingID, businessSegmentID, businessUnitID, itemName, aliasName, isActive);
+                AddSaveParameters(cmd, itemId, divisionID, wingID, businessSegmentID, businessUnitID, departmentManagerID, itemName, aliasName, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
 
                 TempData["Alert"] = "Department updated successfully.";
@@ -90,10 +99,11 @@ public class DepartmentSetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblDepartment
-                        (DivisionID, WingID, BusinessSegmentID, BusinessUnitID, DepartmentName, AliasName, IsActive)
+                        (DivisionID, WingID, BusinessSegmentID, BusinessUnitID, DepartmentManagerID, DepartmentName, AliasName, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
-                        (@DivisionID, @WingID, @BusinessSegmentID, @BusinessUnitID, @DepartmentName, @AliasName, @IsActive);", conn);
-                AddSaveParameters(cmd, itemId, divisionID, wingID, businessSegmentID, businessUnitID, itemName, aliasName, isActive);
+                        (@DivisionID, @WingID, @BusinessSegmentID, @BusinessUnitID, @DepartmentManagerID, @DepartmentName, @AliasName, @IsActive, GETDATE(), @CreatedByUserID);", conn);
+                AddSaveParameters(cmd, itemId, divisionID, wingID, businessSegmentID, businessUnitID, departmentManagerID, itemName, aliasName, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
 
                 TempData["Alert"] = "Department added successfully.";
@@ -123,9 +133,11 @@ public class DepartmentSetupModel : PageModel
             using var cmd = new SqlCommand(@"
                 UPDATE tblDepartment
                 SET IsActive = 0,
-                    ModifiedOn = GETDATE()
+                    ModifiedOn = GETDATE(),
+                    ModifiedByUserID = @ModifiedByUserID
                 WHERE DepartmentID = @DepartmentID;", conn);
             cmd.Parameters.AddWithValue("@DepartmentID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 
@@ -143,16 +155,17 @@ public class DepartmentSetupModel : PageModel
 
     private static void AddSaveParameters(
         SqlCommand cmd, int departmentID, int divisionID, int wingID,
-        int businessSegmentID, int businessUnitID,
+        int businessSegmentID, int businessUnitID, int departmentManagerID,
         string departmentName, string aliasName, bool isActive)
     {
         static object Fk(int id) => id <= 0 ? DBNull.Value : (object)id;
 
-        cmd.Parameters.AddWithValue("@DepartmentID",      departmentID);
-        cmd.Parameters.AddWithValue("@DivisionID",        Fk(divisionID));
-        cmd.Parameters.AddWithValue("@WingID",            Fk(wingID));
-        cmd.Parameters.AddWithValue("@BusinessSegmentID", Fk(businessSegmentID));
-        cmd.Parameters.AddWithValue("@BusinessUnitID",    Fk(businessUnitID));
+        cmd.Parameters.AddWithValue("@DepartmentID",        departmentID);
+        cmd.Parameters.AddWithValue("@DivisionID",          Fk(divisionID));
+        cmd.Parameters.AddWithValue("@WingID",              Fk(wingID));
+        cmd.Parameters.AddWithValue("@BusinessSegmentID",   Fk(businessSegmentID));
+        cmd.Parameters.AddWithValue("@BusinessUnitID",      Fk(businessUnitID));
+        cmd.Parameters.AddWithValue("@DepartmentManagerID", Fk(departmentManagerID));
         cmd.Parameters.AddWithValue("@DepartmentName",    departmentName.Trim());
         cmd.Parameters.AddWithValue("@AliasName",       string.IsNullOrWhiteSpace(aliasName) ? DBNull.Value : aliasName.Trim());
         cmd.Parameters.AddWithValue("@IsActive",          isActive);
@@ -164,6 +177,34 @@ public class DepartmentSetupModel : PageModel
         BusinessSegments = LoadLookup("tblBusinessSegment",  "BusinessSegmentID",  "BusinessSegmentName");
         BusinessUnits    = LoadLookup("tblBusinessUnit",     "BusinessUnitID",     "BusinessUnitName");
         Divisions        = LoadLookup("tblDivision",         "DivisionID",         "DivisionName");
+        Employees        = LoadEmployees();
+    }
+
+    private List<LookupItem> LoadEmployees()
+    {
+        var items = new List<LookupItem>();
+
+        using var conn = new SqlConnection(_conn);
+        using var cmd = new SqlCommand(@"
+            SELECT EmployeeID, EmployeeCode, FirstName, LastName
+            FROM tblEmployee
+            WHERE Status = 'Active'
+            ORDER BY FirstName, LastName;", conn);
+        conn.Open();
+
+        using var dr = cmd.ExecuteReader();
+        while (dr.Read())
+        {
+            var code = dr["EmployeeCode"].ToString() ?? "";
+            var name = $"{dr["FirstName"]} {dr["LastName"]}".Trim();
+            items.Add(new LookupItem
+            {
+                Id   = Convert.ToInt32(dr["EmployeeID"]),
+                Name = string.IsNullOrWhiteSpace(code) ? name : $"{code} – {name}"
+            });
+        }
+
+        return items;
     }
 
     private List<LookupItem> LoadLookup(string tableName, string idColumn, string nameColumn)
@@ -199,12 +240,15 @@ public class DepartmentSetupModel : PageModel
                    d.WingID, w.WingName,
                    d.BusinessSegmentID, bs.BusinessSegmentName,
                    d.BusinessUnitID, bu.BusinessUnitName,
+                   d.DepartmentManagerID,
+                   e.EmployeeCode + ' – ' + e.FirstName + ' ' + e.LastName AS DepartmentManagerName,
                    d.DepartmentName, d.AliasName, d.IsActive
             FROM tblDepartment d
             LEFT JOIN tblDivision v         ON v.DivisionID = d.DivisionID
             LEFT JOIN tblWing w             ON w.WingID = d.WingID
             LEFT JOIN tblBusinessSegment bs ON bs.BusinessSegmentID = d.BusinessSegmentID
             LEFT JOIN tblBusinessUnit bu    ON bu.BusinessUnitID = d.BusinessUnitID
+            LEFT JOIN tblEmployee e         ON e.EmployeeID = d.DepartmentManagerID
             WHERE d.DepartmentID = @DepartmentID;", conn);
         cmd.Parameters.AddWithValue("@DepartmentID", departmentID);
         conn.Open();
@@ -226,12 +270,15 @@ public class DepartmentSetupModel : PageModel
                    d.WingID, w.WingName,
                    d.BusinessSegmentID, bs.BusinessSegmentName,
                    d.BusinessUnitID, bu.BusinessUnitName,
+                   d.DepartmentManagerID,
+                   e.EmployeeCode + ' – ' + e.FirstName + ' ' + e.LastName AS DepartmentManagerName,
                    d.DepartmentName, d.AliasName, d.IsActive
             FROM tblDepartment d
             LEFT JOIN tblDivision v         ON v.DivisionID = d.DivisionID
             LEFT JOIN tblWing w             ON w.WingID = d.WingID
             LEFT JOIN tblBusinessSegment bs ON bs.BusinessSegmentID = d.BusinessSegmentID
             LEFT JOIN tblBusinessUnit bu    ON bu.BusinessUnitID = d.BusinessUnitID
+            LEFT JOIN tblEmployee e         ON e.EmployeeID = d.DepartmentManagerID
             ORDER BY d.IsActive DESC, v.DivisionName, d.DepartmentName;", conn);
         conn.Open();
 
@@ -258,6 +305,8 @@ public class DepartmentSetupModel : PageModel
             BusinessSegmentName = StrOrEmpty(dr["BusinessSegmentName"]),
             BusinessUnitID      = IntOrZero(dr["BusinessUnitID"]),
             BusinessUnitName    = StrOrEmpty(dr["BusinessUnitName"]),
+            DepartmentManagerID   = IntOrZero(dr["DepartmentManagerID"]),
+            DepartmentManagerName = StrOrEmpty(dr["DepartmentManagerName"]),
             Name                = dr["DepartmentName"].ToString() ?? "",
             AliasName           = dr["AliasName"].ToString() ?? "",
             IsActive            = Convert.ToBoolean(dr["IsActive"])

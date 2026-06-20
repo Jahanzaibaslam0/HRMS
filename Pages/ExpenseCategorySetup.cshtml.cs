@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class ExpenseCategorySetupModel : LookupSetupPageModel
 {
-    public ExpenseCategorySetupModel(IConfiguration config) : base(config) { }
+    public ExpenseCategorySetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblExpenseCategory";
     protected override string IdColumn => "ExpenseCategoryID";

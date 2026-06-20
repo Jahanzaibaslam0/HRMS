@@ -1,0 +1,96 @@
+@page
+@model HRMS.Pages.NotificationsModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+    <style>
+        .notif-layout { display: grid; grid-template-columns: 320px 1fr; gap: 1rem; }
+        .notif-list { list-style: none; padding: 0; margin: 0; }
+        .notif-list li a {
+            display: block;
+            padding: .75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--text-dark);
+        }
+        .notif-list li a:hover, .notif-list li a.active {
+            background: rgba(46,49,146,.08);
+            border-left: 3px solid var(--gb-red);
+        }
+        .notif-detail-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .75rem;
+            margin-bottom: 1rem;
+            font-size: .82rem;
+            color: var(--text-muted);
+        }
+        .notif-detail-body { white-space: pre-wrap; line-height: 1.7; }
+        @@media (max-width: 900px) {
+            .notif-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        <div class="notif-layout">
+            <div class="card">
+                <div class="card-header"><h2>Active Notifications</h2></div>
+                <div class="card-body" style="padding:0;">
+                    @if (Model.ActiveNotifications.Count == 0)
+                    {
+                        <p style="padding:1rem; color:var(--text-muted);">No active notifications at this time.</p>
+                    }
+                    else
+                    {
+                        <ul class="notif-list">
+                            @foreach (var n in Model.ActiveNotifications)
+                            {
+                                <li>
+                                    <a href="/Notifications?id=@n.NotificationID"
+                                       class="@(Model.Selected?.NotificationID == n.NotificationID ? "active" : "")">
+                                        <strong>@n.Name</strong>
+                                        <div style="font-size:.75rem; color:var(--text-muted); margin-top:.2rem;">
+                                            @n.StartDate.ToString("dd-MMM-yyyy") – @n.ValidTillDate.ToString("dd-MMM-yyyy")
+                                        </div>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h2>Notification Details</h2></div>
+                <div class="card-body">
+                    @if (Model.Selected == null)
+                    {
+                        <p style="color:var(--text-muted);">Select a notification to view details.</p>
+                    }
+                    else
+                    {
+                        <h3 style="margin-bottom:.5rem; color:var(--gb-blue);">@Model.Selected.Name</h3>
+                        <div class="notif-detail-meta">
+                            <span><strong>ID:</strong> @Model.Selected.NotificationID</span>
+                            <span><strong>Department:</strong> @Model.Selected.DepartmentName</span>
+                            <span><strong>Start:</strong> @Model.Selected.StartDate.ToString("dd-MMM-yyyy")</span>
+                            <span><strong>Valid Till:</strong> @Model.Selected.ValidTillDate.ToString("dd-MMM-yyyy")</span>
+                            <span><strong>Status:</strong> @(Model.Selected.IsActive ? "Active" : "Inactive")</span>
+                        </div>
+                        <div class="notif-detail-body">@Model.Selected.Description</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </main>
+    @await Html.PartialAsync("_AppFooter")
+</body>
+</html>

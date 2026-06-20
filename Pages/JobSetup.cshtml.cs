@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -27,15 +28,17 @@ public class JobRecord
 public class JobSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
     public static readonly string[] JobLevels = new[]
     {
         "Entry", "Standard", "Senior", "Lead", "Manager", "Director", "Executive"
     };
 
-    public JobSetupModel(IConfiguration config)
+    public JobSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Job Setup";
@@ -139,11 +142,13 @@ public class JobSetupModel : PageModel
                         DottedLineManagerEmployeeID = @DottedLineManagerEmployeeID,
                         BackupApproverEmployeeID    = @BackupApproverEmployeeID,
                         IsActive                    = @IsActive,
-                        ModifiedOn                  = GETDATE()
+                        ModifiedOn                  = GETDATE(),
+                        ModifiedByUserID            = @ModifiedByUserID
                     WHERE JobID = @JobID;", conn);
                 AddParams(cmd, jobID, jobTitle, jobCode, gradeID, jobLevel, positionNumber,
                     reportsToEmployeeID, functionalManagerEmployeeID,
                     dottedLineManagerEmployeeID, backupApproverEmployeeID, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Job updated successfully.";
             }
@@ -153,14 +158,15 @@ public class JobSetupModel : PageModel
                     INSERT INTO tblJob
                         (JobTitle, JobCode, GradeID, JobLevel, PositionNumber,
                          ReportsToEmployeeID, FunctionalManagerEmployeeID,
-                         DottedLineManagerEmployeeID, BackupApproverEmployeeID, IsActive)
+                         DottedLineManagerEmployeeID, BackupApproverEmployeeID, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
                         (@JobTitle, @JobCode, @GradeID, @JobLevel, @PositionNumber,
                          @ReportsToEmployeeID, @FunctionalManagerEmployeeID,
-                         @DottedLineManagerEmployeeID, @BackupApproverEmployeeID, @IsActive);", conn);
+                         @DottedLineManagerEmployeeID, @BackupApproverEmployeeID, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, jobTitle, jobCode, gradeID, jobLevel, positionNumber,
                     reportsToEmployeeID, functionalManagerEmployeeID,
                     dottedLineManagerEmployeeID, backupApproverEmployeeID, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Job added successfully.";
             }
@@ -189,9 +195,10 @@ public class JobSetupModel : PageModel
         {
             using var conn = new SqlConnection(_conn);
             using var cmd = new SqlCommand(@"
-                UPDATE tblJob SET IsActive = 0, ModifiedOn = GETDATE()
+                UPDATE tblJob SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE JobID = @JobID;", conn);
             cmd.Parameters.AddWithValue("@JobID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 

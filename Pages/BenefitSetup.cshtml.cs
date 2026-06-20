@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -19,6 +20,7 @@ public class BenefitItem
 public class BenefitSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
     public static readonly string[] BenefitTypes = new[]
     {
@@ -33,9 +35,10 @@ public class BenefitSetupModel : PageModel
     public string            AlertMessage { get; set; } = "";
     public string            AlertType    { get; set; } = "success";
 
-    public BenefitSetupModel(IConfiguration config)
+    public BenefitSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     // ── GET ───────────────────────────────────────────────────────────
@@ -76,7 +79,8 @@ public class BenefitSetupModel : PageModel
                         BenefitType  = @Type,
                         Description  = @Desc,
                         IsActive     = @IsActive,
-                        ModifiedOn   = GETDATE()
+                        ModifiedOn   = GETDATE(),
+                        ModifiedByUserID = @ModifiedByUserID
                     WHERE BenefitID  = @Id;", conn);
                 cmd.Parameters.AddWithValue("@Id",       benefitId);
                 cmd.Parameters.AddWithValue("@Code",     string.IsNullOrWhiteSpace(benefitCode) ? DBNull.Value : (object)benefitCode.Trim());
@@ -84,19 +88,21 @@ public class BenefitSetupModel : PageModel
                 cmd.Parameters.AddWithValue("@Type",     string.IsNullOrWhiteSpace(benefitType) ? DBNull.Value : (object)benefitType.Trim());
                 cmd.Parameters.AddWithValue("@Desc",     string.IsNullOrWhiteSpace(description) ? DBNull.Value : (object)description.Trim());
                 cmd.Parameters.AddWithValue("@IsActive", isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Benefit updated successfully.";
             }
             else
             {
                 using var cmd = new SqlCommand(@"
-                    INSERT INTO tblBenefit (BenefitCode, BenefitName, BenefitType, Description, IsActive)
-                    VALUES (@Code, @Name, @Type, @Desc, @IsActive);", conn);
+                    INSERT INTO tblBenefit (BenefitCode, BenefitName, BenefitType, Description, IsActive, CreatedOn, CreatedByUserID)
+                    VALUES (@Code, @Name, @Type, @Desc, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 cmd.Parameters.AddWithValue("@Code",     string.IsNullOrWhiteSpace(benefitCode) ? DBNull.Value : (object)benefitCode.Trim());
                 cmd.Parameters.AddWithValue("@Name",     benefitName.Trim());
                 cmd.Parameters.AddWithValue("@Type",     string.IsNullOrWhiteSpace(benefitType) ? DBNull.Value : (object)benefitType.Trim());
                 cmd.Parameters.AddWithValue("@Desc",     string.IsNullOrWhiteSpace(description) ? DBNull.Value : (object)description.Trim());
                 cmd.Parameters.AddWithValue("@IsActive", isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Benefit added successfully.";
             }
@@ -125,9 +131,10 @@ public class BenefitSetupModel : PageModel
             using var conn = new SqlConnection(_conn);
             conn.Open();
             using var cmd = new SqlCommand(@"
-                UPDATE tblBenefit SET IsActive = 0, ModifiedOn = GETDATE()
+                UPDATE tblBenefit SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE BenefitID = @Id;", conn);
             cmd.Parameters.AddWithValue("@Id", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             cmd.ExecuteNonQuery();
             TempData["Alert"]     = "Benefit deactivated.";
             TempData["AlertType"] = "success";

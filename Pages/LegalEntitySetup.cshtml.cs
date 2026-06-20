@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -17,10 +18,12 @@ public class LegalEntityRecord
 public class LegalEntitySetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public LegalEntitySetupModel(IConfiguration config)
+    public LegalEntitySetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public string PageTitle => "Legal Entity Setup";
@@ -73,9 +76,11 @@ public class LegalEntitySetupModel : PageModel
                         AliasName       = @AliasName,
                         Description     = @Description,
                         IsActive        = @IsActive,
-                        ModifiedOn      = GETDATE()
+                        ModifiedOn      = GETDATE(),
+                        ModifiedByUserID = @ModifiedByUserID
                     WHERE LegalEntityID = @ID;", conn);
                 AddParams(cmd, legalEntityID, legalEntityCode, legalEntityName, aliasName, description, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Legal Entity updated successfully.";
             }
@@ -83,10 +88,11 @@ public class LegalEntitySetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblLegalEntity
-                        (LegalEntityCode, LegalEntityName, AliasName, Description, IsActive)
+                        (LegalEntityCode, LegalEntityName, AliasName, Description, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
-                        (@Code, @Name, @AliasName, @Description, @IsActive);", conn);
+                        (@Code, @Name, @AliasName, @Description, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddParams(cmd, 0, legalEntityCode, legalEntityName, aliasName, description, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 TempData["Alert"] = "Legal Entity added successfully.";
             }
@@ -114,9 +120,10 @@ public class LegalEntitySetupModel : PageModel
             using var conn = new SqlConnection(_conn);
             using var cmd = new SqlCommand(@"
                 UPDATE tblLegalEntity
-                SET IsActive = 0, ModifiedOn = GETDATE()
+                SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE LegalEntityID = @ID;", conn);
             cmd.Parameters.AddWithValue("@ID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 

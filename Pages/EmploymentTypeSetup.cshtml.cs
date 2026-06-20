@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class EmploymentTypeSetupModel : LookupSetupPageModel
 {
-    public EmploymentTypeSetupModel(IConfiguration config) : base(config) { }
+    public EmploymentTypeSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblEmploymentType";
     protected override string IdColumn => "EmploymentTypeID";

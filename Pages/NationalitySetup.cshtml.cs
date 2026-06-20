@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class NationalitySetupModel : LookupSetupPageModel
 {
-    public NationalitySetupModel(IConfiguration config) : base(config) { }
+    public NationalitySetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblNationality";
     protected override string IdColumn => "NationalityID";

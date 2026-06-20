@@ -1,0 +1,267 @@
+@page
+@model HRMS.Pages.TrainingMasterModel
+@{
+    Layout = null;
+    var pageTitle = Model.ShowForm
+        ? (Model.EditMode ? "Edit Training" : "New Training")
+        : "Employee Training";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS – @pageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+    <style>
+        .train-list-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
+        .train-list-header .right-controls { display:flex; align-items:center; gap:.6rem; }
+        .form-breadcrumb { display:flex; align-items:center; gap:.75rem; margin-bottom:1rem; padding:.5rem .75rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; }
+        .form-breadcrumb .crumb-sep { color:#9ca3af; }
+        .form-breadcrumb .crumb-current { font-weight:600; color:#111827; }
+    </style>
+</head>
+<body>
+
+    @await Html.PartialAsync("_AppHeader", pageTitle)
+
+    <main class="container">
+
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        @if (!Model.ShowForm)
+        {
+            <div class="card">
+                <div class="card-header train-list-header">
+                    <h2>Training Records</h2>
+                    <div class="right-controls">
+                        <input type="text" id="txtSearch" class="form-control" style="width:280px"
+                               placeholder="Search employee / training / status…"
+                               onkeyup="searchTrainTable(this.value)" />
+                        <a href="/TrainingMaster?newRecord=true" class="btn btn-primary">+ New Training</a>
+                    </div>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="data-table" id="trainTable">
+                        <thead class="grid-header">
+                            <tr>
+                                <th>#</th>
+                                <th>ID</th>
+                                <th>Employee</th>
+                                <th>Training Name</th>
+                                <th>Training ID</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Last Training</th>
+                                <th>Next Due</th>
+                                <th>Hrs YTD</th>
+                                <th>Hrs Required</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Records.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="12" style="text-align:center; padding:2rem; color:#6b7280;">
+                                        No training records found.
+                                        <br />
+                                        <a href="/TrainingMaster?newRecord=true" class="btn btn-primary" style="margin-top:.75rem;">+ Add First Record</a>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                int rowNum = 0;
+                                foreach (var r in Model.Records)
+                                {
+                                    rowNum++;
+                                    <tr class="@(rowNum % 2 == 0 ? "grid-alt-row" : "grid-row")">
+                                        <td>@rowNum</td>
+                                        <td><strong>#@r.EmployeeTrainingID</strong></td>
+                                        <td>@r.EmployeeCode<br /><span style="font-size:.8rem;color:#6b7280;">@r.EmployeeName</span></td>
+                                        <td>@r.TrainingName</td>
+                                        <td>@r.TrainingCode</td>
+                                        <td>@r.TrainingDepartment</td>
+                                        <td><span class="badge badge-info">@r.MandatoryTrainingStatus</span></td>
+                                        <td>@r.LastTrainingDate?.ToString("dd MMM yyyy")</td>
+                                        <td>@r.NextTrainingDue?.ToString("dd MMM yyyy")</td>
+                                        <td>@(r.TrainingHoursYTD?.ToString("N1") ?? "—")</td>
+                                        <td>@(r.TrainingHoursRequiredAnnual?.ToString("N1") ?? "—")</td>
+                                        <td style="white-space:nowrap;">
+                                            <a href="/TrainingMaster?editId=@r.EmployeeTrainingID" class="btn btn-secondary" style="padding:3px 12px; font-size:.8rem;">Edit</a>
+                                            <form method="post" asp-page-handler="Delete" style="display:inline"
+                                                  onsubmit="return confirm('Delete this training record?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="deleteId" value="@r.EmployeeTrainingID" />
+                                                <button type="submit" class="btn btn-danger" style="padding:3px 10px; font-size:.8rem;">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <span class="record-count">Total Records: @Model.Records.Count</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="form-breadcrumb">
+                <a href="/TrainingMaster" class="btn btn-secondary" style="padding:4px 14px;">&#8592; Back to List</a>
+                <span class="crumb-sep">/</span>
+                <span class="crumb-current">@(Model.EditMode ? "Edit Training" : "New Training")</span>
+                @if (Model.EditMode)
+                {
+                    <span class="crumb-sep">–</span>
+                    <span style="color:#4b5563; font-size:.9rem;">Record #@Model.Input.EmployeeTrainingID</span>
+                }
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>@(Model.EditMode ? "Edit Training Details" : "Add Training Record")</h2>
+                </div>
+
+                <form method="post" id="trainForm" novalidate>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="EmployeeTrainingID" value="@Model.Input.EmployeeTrainingID" />
+                    <input type="hidden" name="EditMode" value="@(Model.EditMode ? "true" : "false")" />
+
+                    <div class="card-body">
+                        <div class="form-grid">
+
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Employee & Training Identity</h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Employee <span class="required">*</span></label>
+                                <select name="EmployeeID" class="form-control" required>
+                                    <option value="">-- Select Employee --</option>
+                                    @foreach (var emp in Model.Employees)
+                                    {
+                                        if (Model.Input.EmployeeID == emp.Id)
+                                        { <option value="@emp.Id" selected>@emp.Name</option> }
+                                        else
+                                        { <option value="@emp.Id">@emp.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Training Name</label>
+                                <input type="text" name="TrainingName" class="form-control" maxlength="200"
+                                       value="@Model.Input.TrainingName" placeholder="e.g. Safety Induction" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Training ID</label>
+                                <input type="text" name="TrainingCode" class="form-control" maxlength="50"
+                                       value="@Model.Input.TrainingCode" placeholder="e.g. TRN-001" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Training Department</label>
+                                <select name="TrainingDepartment" class="form-control">
+                                    @foreach (var dept in Model.Departments)
+                                    {
+                                        if (Model.Input.TrainingDepartment == dept.Name)
+                                        { <option value="@dept.Name" selected>@dept.Name</option> }
+                                        else
+                                        { <option value="@dept.Name">@dept.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Mandatory Training Status</label>
+                                <select name="MandatoryTrainingStatus" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var s in Model.MandatoryStatusOptions)
+                                    {
+                                        if (Model.Input.MandatoryTrainingStatus == s)
+                                        { <option value="@s" selected>@s</option> }
+                                        else
+                                        { <option value="@s">@s</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Validity & Hours</h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Safety Training Valid Till</label>
+                                <input type="date" name="SafetyTrainingValidTill" class="form-control"
+                                       value="@Model.Input.SafetyTrainingValidTill" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>GMP Training Valid Till</label>
+                                <input type="date" name="GMPTrainingValidTill" class="form-control"
+                                       value="@Model.Input.GMPTrainingValidTill" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Training Hours (YTD)</label>
+                                <input type="number" name="TrainingHoursYTD" class="form-control"
+                                       step="0.1" min="0" placeholder="e.g. 24"
+                                       value="@Model.Input.TrainingHoursYTD" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Training Hours Required (Annual)</label>
+                                <input type="number" name="TrainingHoursRequiredAnnual" class="form-control"
+                                       step="0.1" min="0" placeholder="e.g. 40"
+                                       value="@Model.Input.TrainingHoursRequiredAnnual" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Last Training Date</label>
+                                <input type="date" name="LastTrainingDate" class="form-control"
+                                       value="@Model.Input.LastTrainingDate" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Next Training Due</label>
+                                <input type="date" name="NextTrainingDue" class="form-control"
+                                       value="@Model.Input.NextTrainingDue" />
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="card-footer" style="display:flex; gap:.75rem;">
+                        <button type="submit" class="btn btn-primary">
+                            @(Model.EditMode ? "Update Training" : "Save Training")
+                        </button>
+                        <a href="/TrainingMaster" class="btn btn-secondary">&#8592; Back to List</a>
+                    </div>
+                </form>
+            </div>
+        }
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+
+    @if (!Model.ShowForm)
+    {
+        <script>
+            function searchTrainTable(q) {
+                q = q.toLowerCase();
+                document.querySelectorAll('#trainTable tbody tr').forEach(function (row) {
+                    row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+                });
+            }
+        </script>
+    }
+</body>
+</html>

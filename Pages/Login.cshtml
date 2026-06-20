@@ -1,79 +1,89 @@
-@page
-@model HRMS.Pages.LoginModel
-@{ Layout = null; }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HRMS – Login</title>
-    <link rel="stylesheet" href="/css/style.css?v=3" />
-    <style>
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #0f1f14 0%, #1a2e22 50%, #0f2d20 100%);
-        }
-        .login-card {
-            width: 100%;
-            max-width: 420px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 20px 60px rgba(0,0,0,.35);
-            overflow: hidden;
-        }
-        .login-header {
-            background: linear-gradient(110deg, #0f1f14, #1a2e22);
-            color: #c8dfc8;
-            padding: 1.5rem 2rem;
-            text-align: center;
-            border-bottom: 3px solid #c99a2e;
-        }
-        .login-header h1 { margin: 0; font-size: 1.5rem; color: #f6c76f; }
-        .login-header p  { margin: .25rem 0 0; font-size: .85rem; opacity: .85; }
-        .login-body { padding: 2rem; }
-        .login-footer {
-            padding: .75rem 2rem 1.25rem;
-            font-size: .78rem;
-            color: #6b7280;
-            text-align: center;
-            border-top: 1px solid #e5e7eb;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-card">
-        <div class="login-header">
-            <h1>HRMS</h1>
-            <p>Human Resource Management System</p>
-        </div>
-        <form method="post" class="login-body">
-            <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
-
-            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-            {
-                <div class="alert alert-error" style="margin-bottom:1rem;">@Model.ErrorMessage</div>
-            }
-
-            <div class="form-group">
-                <label>Username <span class="required">*</span></label>
-                <input type="text" name="Username" class="form-control"
-                       value="@Model.Username" autocomplete="username" autofocus />
-            </div>
-            <div class="form-group">
-                <label>Password <span class="required">*</span></label>
-                <input type="password" name="Password" class="form-control"
-                       autocomplete="current-password" />
-            </div>
-            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:.5rem;">
-                Sign In
-            </button>
-        </form>
-        <div class="login-footer">
-            Default admin: <strong>admin</strong> / <strong>Admin@123</strong>
-        </div>
-    </div>
-</body>
-</html>
+@page
+@model HRMS.Pages.LoginModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS – Login</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--gb-blue) 0%, var(--gb-blue-dark) 55%, #1a1d5c 100%);
+        }
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(46,49,146,.35);
+            overflow: hidden;
+        }
+        .login-header {
+            background: #fff;
+            color: var(--gb-blue);
+            padding: 1.5rem 2rem 1rem;
+            text-align: center;
+            border-bottom: 4px solid var(--gb-red);
+        }
+        .login-header img {
+            height: 52px;
+            width: auto;
+            max-width: 200px;
+            object-fit: contain;
+            margin-bottom: .75rem;
+        }
+        .login-header h1 { margin: 0; font-size: 1.25rem; color: var(--gb-blue); }
+        .login-header p  { margin: .25rem 0 0; font-size: .82rem; color: var(--gb-red); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+        .login-body { padding: 2rem; }
+        .login-footer {
+            padding: .75rem 2rem 1.25rem;
+            font-size: .78rem;
+            color: #6b7280;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+            background: #f8f9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <img src="/images/gb-logo.png" alt="Ghazi Brothers" />
+            <h1>HRMS</h1>
+            <p>Human Resource Management System</p>
+        </div>
+        <form method="post" class="login-body">
+            <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-error" style="margin-bottom:1rem;">@Model.ErrorMessage</div>
+            }
+
+            <div class="form-group">
+                <label>Username <span class="required">*</span></label>
+                <input type="text" name="Username" class="form-control"
+                       value="@Model.Username" autocomplete="username" autofocus />
+            </div>
+            <div class="form-group">
+                <label>Password <span class="required">*</span></label>
+                <input type="password" name="Password" class="form-control"
+                       autocomplete="current-password" />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:.5rem;">
+                Sign In
+            </button>
+        </form>
+        <div class="login-footer">
+            Default admin: <strong>admin</strong> / <strong>Admin@123</strong>
+        </div>
+    </div>
+</body>
+</html>
+

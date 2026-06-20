@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class EmploymentStatusSetupModel : LookupSetupPageModel
 {
-    public EmploymentStatusSetupModel(IConfiguration config) : base(config) { }
+    public EmploymentStatusSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblEmploymentStatus";
     protected override string IdColumn => "EmploymentStatusID";

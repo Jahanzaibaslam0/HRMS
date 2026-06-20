@@ -1,0 +1,86 @@
+@inject HRMS.Services.NotificationService NotificationService
+@inject HRMS.Services.MemorandumService MemorandumService
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpAccessor
+
+@{
+    var ctx = HttpAccessor.HttpContext;
+    var showNotif = ctx?.Session.GetInt32("ShowNotificationPopup") == 1;
+    var showMemo = ctx?.Session.GetInt32("ShowMemorandumPopup") == 1;
+    List<HRMS.Services.NotificationItem> notifItems = new();
+    List<HRMS.Services.MemorandumItem> memoItems = new();
+
+    if (ctx != null)
+    {
+        if (showNotif)
+        {
+            ctx.Session.Remove("ShowNotificationPopup");
+            notifItems = NotificationService.GetActiveNotifications();
+        }
+        if (showMemo)
+        {
+            ctx.Session.Remove("ShowMemorandumPopup");
+            memoItems = MemorandumService.GetActiveMemorandums();
+        }
+    }
+
+    var showPopup = notifItems.Count > 0 || memoItems.Count > 0;
+}
+
+@if (showPopup)
+{
+    <div id="loginAlertsPopup" class="notif-popup-overlay" role="dialog" aria-modal="true">
+        <div class="notif-popup-card" style="max-width:560px;">
+            <div class="notif-popup-header">
+                <h3>Latest Updates</h3>
+                <button type="button" class="notif-popup-close" onclick="closeLoginAlertsPopup()" aria-label="Close">&times;</button>
+            </div>
+            <div class="notif-popup-body">
+                @if (notifItems.Count > 0)
+                {
+                    var latestNotif = notifItems[0];
+                    <h4 style="margin:0 0 .5rem; color:var(--gb-blue); font-size:.9rem;">Notifications</h4>
+                    <p class="notif-popup-intro">@notifItems.Count active notification(s). Latest:</p>
+                    <a href="/Notifications?id=@latestNotif.NotificationID" class="notif-popup-link">
+                        <strong>@latestNotif.Name</strong>
+                        <span>@latestNotif.DepartmentName · @latestNotif.StartDate.ToString("dd-MMM-yyyy") – @latestNotif.ValidTillDate.ToString("dd-MMM-yyyy")</span>
+                    </a>
+                    @if (memoItems.Count > 0) { <hr style="margin:1rem 0; border:0; border-top:1px solid var(--border);" /> }
+                }
+
+                @if (memoItems.Count > 0)
+                {
+                    var latestMemo = memoItems[0];
+                    <h4 style="margin:0 0 .5rem; color:var(--gb-blue); font-size:.9rem;">Memorandums</h4>
+                    <p class="notif-popup-intro">@memoItems.Count active memorandum(s). Latest:</p>
+                    <a href="/Memorandums?id=@latestMemo.MemorandumID" class="notif-popup-link">
+                        <strong>@latestMemo.Name</strong>
+                        <span>@latestMemo.DepartmentName · @latestMemo.StartDate.ToString("dd-MMM-yyyy") – @latestMemo.ValidTillDate.ToString("dd-MMM-yyyy")</span>
+                    </a>
+                    @if (latestMemo.HasDocument)
+                    {
+                        <p style="margin:.5rem 0 0;">
+                            <a href="/Memorandums?id=@latestMemo.MemorandumID" class="btn btn-secondary" style="font-size:.78rem; padding:4px 10px;">View Attached Document</a>
+                        </p>
+                    }
+                }
+            </div>
+            <div class="notif-popup-footer">
+                @if (notifItems.Count > 0)
+                {
+                    <a href="/Notifications" class="btn btn-primary">All Notifications</a>
+                }
+                @if (memoItems.Count > 0)
+                {
+                    <a href="/Memorandums" class="btn btn-primary">All Memorandums</a>
+                }
+                <button type="button" class="btn btn-secondary" onclick="closeLoginAlertsPopup()">Dismiss</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function closeLoginAlertsPopup() {
+            var el = document.getElementById('loginAlertsPopup');
+            if (el) el.style.display = 'none';
+        }
+    </script>
+}

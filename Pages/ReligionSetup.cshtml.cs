@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class ReligionSetupModel : LookupSetupPageModel
 {
-    public ReligionSetupModel(IConfiguration config) : base(config) { }
+    public ReligionSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblReligion";
     protected override string IdColumn => "ReligionID";

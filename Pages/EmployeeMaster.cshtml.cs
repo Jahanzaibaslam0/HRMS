@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -141,16 +142,54 @@ public class EmployeeBankInput
     public bool IsPrimary { get; set; }
 }
 
+public class EmployeeEducationInput
+{
+    public string HighestQualification { get; set; } = "";
+    public string DegreeCertificate { get; set; } = "";
+    public string Specialization { get; set; } = "";
+    public string Institution { get; set; } = "";
+    public string YearOfPassing { get; set; } = "";
+    public string GradeCGPA { get; set; } = "";
+}
+
+public class EmployeeCertificateInput
+{
+    public string CertificationName { get; set; } = "";
+    public string CertificationBody { get; set; } = "";
+    public string CertificateNumber { get; set; } = "";
+    public string IssueDate { get; set; } = "";
+    public string ExpiryDate { get; set; } = "";
+    public bool RenewalRequired { get; set; }
+    public string CertificateCopyPath { get; set; } = "";
+}
+
+public class EmployeeDocumentInput
+{
+    public int DocumentTypeID { get; set; }
+    public string DocumentTypeName { get; set; } = "";
+    public string DocumentNumber { get; set; } = "";
+    public string IssueDate { get; set; } = "";
+    public string ExpiryDate { get; set; } = "";
+    public string Remarks { get; set; } = "";
+    public string DocumentPath { get; set; } = "";
+    public string OriginalFileName { get; set; } = "";
+    public string VerificationStatus { get; set; } = "Pending";
+}
+
 // -------------------------------------------------------
 // Page Model
 // -------------------------------------------------------
 public class EmployeeMasterModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
+    private readonly IWebHostEnvironment _env;
 
-    public EmployeeMasterModel(IConfiguration config)
+    public EmployeeMasterModel(IConfiguration config, AuthService auth, IWebHostEnvironment env)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
+        _env = env;
     }
 
     // Bound properties
@@ -187,6 +226,10 @@ public class EmployeeMasterModel : PageModel
     public List<EmployeeAddressInput> AddressRecords { get; set; } = new();
     public List<EmployeeFamilyMemberInput> FamilyRecords { get; set; } = new();
     public List<EmployeeBankInput> BankRecords { get; set; } = new();
+    public List<EmployeeEducationInput> EducationRecords { get; set; } = new();
+    public List<EmployeeCertificateInput> CertificateRecords { get; set; } = new();
+    public List<EmployeeDocumentInput> DocumentRecords { get; set; } = new();
+    public List<LookupItem> DocumentTypes { get; set; } = new();
     public bool                    EditMode     { get; set; } = false;
     public bool                    ShowForm     { get; set; } = false;
     public string                  AlertMessage { get; set; } = "";
@@ -468,6 +511,99 @@ public class EmployeeMasterModel : PageModel
         return RedirectToPage(new { editId = employeeId });
     }
 
+    public IActionResult OnPostSaveEducation(int EmployeeID, string EmployeeCode, string EducationJson)
+    {
+        var employeeId = ResolveEmployeeId(EmployeeID, EmployeeCode);
+        if (employeeId <= 0)
+        {
+            TempData["Alert"] = "Please save or select an employee before saving education details.";
+            TempData["AlertType"] = "error";
+            return RedirectToPage();
+        }
+
+        try
+        {
+            using var conn = new SqlConnection(_conn);
+            conn.Open();
+            using var tx = conn.BeginTransaction();
+
+            ReplaceEmployeeEducation(conn, tx, employeeId, DeserializeList<EmployeeEducationInput>(EducationJson));
+            tx.Commit();
+
+            TempData["Alert"] = "Employee education details saved successfully.";
+            TempData["AlertType"] = "success";
+        }
+        catch (Exception ex)
+        {
+            TempData["Alert"] = "Error saving education details: " + ex.Message;
+            TempData["AlertType"] = "error";
+        }
+
+        return RedirectToPage(new { editId = employeeId });
+    }
+
+    public IActionResult OnPostSaveCertificates(int EmployeeID, string EmployeeCode, string CertificatesJson)
+    {
+        var employeeId = ResolveEmployeeId(EmployeeID, EmployeeCode);
+        if (employeeId <= 0)
+        {
+            TempData["Alert"] = "Please save or select an employee before saving certificate details.";
+            TempData["AlertType"] = "error";
+            return RedirectToPage();
+        }
+
+        try
+        {
+            using var conn = new SqlConnection(_conn);
+            conn.Open();
+            using var tx = conn.BeginTransaction();
+
+            ReplaceEmployeeCertificates(conn, tx, employeeId, DeserializeList<EmployeeCertificateInput>(CertificatesJson));
+            tx.Commit();
+
+            TempData["Alert"] = "Employee certificate details saved successfully.";
+            TempData["AlertType"] = "success";
+        }
+        catch (Exception ex)
+        {
+            TempData["Alert"] = "Error saving certificate details: " + ex.Message;
+            TempData["AlertType"] = "error";
+        }
+
+        return RedirectToPage(new { editId = employeeId });
+    }
+
+    public IActionResult OnPostSaveDocuments(int EmployeeID, string EmployeeCode, string DocumentsJson)
+    {
+        var employeeId = ResolveEmployeeId(EmployeeID, EmployeeCode);
+        if (employeeId <= 0)
+        {
+            TempData["Alert"] = "Please save or select an employee before saving document details.";
+            TempData["AlertType"] = "error";
+            return RedirectToPage();
+        }
+
+        try
+        {
+            using var conn = new SqlConnection(_conn);
+            conn.Open();
+            using var tx = conn.BeginTransaction();
+
+            ReplaceEmployeeDocuments(conn, tx, employeeId, DeserializeList<EmployeeDocumentInput>(DocumentsJson));
+            tx.Commit();
+
+            TempData["Alert"] = "Employee documents saved successfully.";
+            TempData["AlertType"] = "success";
+        }
+        catch (Exception ex)
+        {
+            TempData["Alert"] = "Error saving document details: " + ex.Message;
+            TempData["AlertType"] = "error";
+        }
+
+        return RedirectToPage(new { editId = employeeId });
+    }
+
     private int ResolveEmployeeId(int employeeID, string employeeCode)
     {
         if (employeeID > 0)
@@ -639,6 +775,7 @@ public class EmployeeMasterModel : PageModel
         BenefitEntitlements= LoadLookup("tblBenefitEntitlement", "BenefitEntitlementID", "BenefitEntitlementName");
         Users              = LoadUserLookup();
         Banks              = LoadBankLookup();
+        DocumentTypes      = LoadLookup("tblDocumentType", "DocumentTypeID", "DocumentTypeName");
     }
 
     private List<LookupItem> LoadUserLookup()
@@ -929,6 +1066,9 @@ public class EmployeeMasterModel : PageModel
         AddressRecords = LoadEmployeeAddresses(conn, employeeID);
         FamilyRecords = LoadEmployeeFamilyMembers(conn, employeeID);
         BankRecords = LoadEmployeeBanks(conn, employeeID);
+        EducationRecords = LoadEmployeeEducation(conn, employeeID);
+        CertificateRecords = LoadEmployeeCertificates(conn, employeeID);
+        DocumentRecords = LoadEmployeeDocuments(conn, employeeID);
         EnsureDefaultRows();
     }
 
@@ -985,10 +1125,12 @@ public class EmployeeMasterModel : PageModel
                     ConfirmationDate   = @ConfirmationDate,
                     BasicSalary        = @BasicSalary,
                     Status             = @Status,
-                    ModifiedOn         = GETDATE()
+                    ModifiedOn         = GETDATE(),
+                    ModifiedByUserID   = @ModifiedByUserID
                 WHERE EmployeeID = @EmployeeID;", conn, tx);
 
             AddEmployeeParams(cmd, e, Fk, Str);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             cmd.ExecuteNonQuery();
             return e.EmployeeID;
         }
@@ -1008,7 +1150,7 @@ public class EmployeeMasterModel : PageModel
                  BloodGroupID, BenefitEntitlementID, UserID,
                  Designation, DateOfJoining,
                  EmploymentStartDate, ProbationPeriodDays, ProbationEndDate, ConfirmationDate,
-                 BasicSalary, Status)
+                 BasicSalary, Status, CreatedOn, CreatedByUserID)
             VALUES
                 (@EmployeeCode, @FirstName, @LastName,
                  @FathersHusbandsName, @DisplayName, @NationalIDNumber,
@@ -1023,10 +1165,11 @@ public class EmployeeMasterModel : PageModel
                  @BloodGroupID, @BenefitEntitlementID, @UserID,
                  @Designation, @DateOfJoining,
                  @EmploymentStartDate, @ProbationPeriodDays, @ProbationEndDate, @ConfirmationDate,
-                 @BasicSalary, @Status);
+                 @BasicSalary, @Status, GETDATE(), @CreatedByUserID);
             SELECT CAST(SCOPE_IDENTITY() AS INT);", conn, tx);
 
         AddEmployeeParams(ins, e, Fk, Str);
+        AuditHelper.AddCreatedBy(ins, _auth.CurrentUserId);
         return Convert.ToInt32(ins.ExecuteScalar());
     }
 
@@ -1094,9 +1237,9 @@ public class EmployeeMasterModel : PageModel
             sortOrder++;
             using var insCmd = new SqlCommand(@"
                 INSERT INTO tblEmployeeContact
-                    (EmployeeID, ContactType, ContactName, Relationship, ContactValue, IsPrimary, SortOrder)
+                    (EmployeeID, ContactType, ContactName, Relationship, ContactValue, IsPrimary, SortOrder, CreatedOn, CreatedByUserID)
                 VALUES
-                    (@EmployeeID, @ContactType, @ContactName, @Relationship, @ContactValue, @IsPrimary, @SortOrder);", conn, tx);
+                    (@EmployeeID, @ContactType, @ContactName, @Relationship, @ContactValue, @IsPrimary, @SortOrder, GETDATE(), @CreatedByUserID);", conn, tx);
 
             insCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
             insCmd.Parameters.AddWithValue("@ContactType", contact.ContactType.Trim());
@@ -1105,6 +1248,7 @@ public class EmployeeMasterModel : PageModel
             insCmd.Parameters.AddWithValue("@ContactValue", string.IsNullOrWhiteSpace(contact.ContactValue) ? DBNull.Value : contact.ContactValue.Trim());
             insCmd.Parameters.AddWithValue("@IsPrimary", contact.IsPrimary);
             insCmd.Parameters.AddWithValue("@SortOrder", sortOrder);
+            AuditHelper.AddCreatedBy(insCmd, _auth.CurrentUserId);
             insCmd.ExecuteNonQuery();
         }
     }
@@ -1123,9 +1267,9 @@ public class EmployeeMasterModel : PageModel
             sortOrder++;
             using var insCmd = new SqlCommand(@"
                 INSERT INTO tblEmployeeAddress
-                    (EmployeeID, AddressType, AddressLine, City, ProvinceState, PostalCode, IsPrimary, SortOrder)
+                    (EmployeeID, AddressType, AddressLine, City, ProvinceState, PostalCode, IsPrimary, SortOrder, CreatedOn, CreatedByUserID)
                 VALUES
-                    (@EmployeeID, @AddressType, @AddressLine, @City, @ProvinceState, @PostalCode, @IsPrimary, @SortOrder);", conn, tx);
+                    (@EmployeeID, @AddressType, @AddressLine, @City, @ProvinceState, @PostalCode, @IsPrimary, @SortOrder, GETDATE(), @CreatedByUserID);", conn, tx);
 
             insCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
             insCmd.Parameters.AddWithValue("@AddressType", string.IsNullOrWhiteSpace(address.AddressType) ? "Other" : address.AddressType.Trim());
@@ -1135,6 +1279,7 @@ public class EmployeeMasterModel : PageModel
             insCmd.Parameters.AddWithValue("@PostalCode", string.IsNullOrWhiteSpace(address.PostalCode) ? DBNull.Value : address.PostalCode.Trim());
             insCmd.Parameters.AddWithValue("@IsPrimary", address.IsPrimary);
             insCmd.Parameters.AddWithValue("@SortOrder", sortOrder);
+            AuditHelper.AddCreatedBy(insCmd, _auth.CurrentUserId);
             insCmd.ExecuteNonQuery();
         }
     }
@@ -1153,9 +1298,9 @@ public class EmployeeMasterModel : PageModel
             sortOrder++;
             using var insCmd = new SqlCommand(@"
                 INSERT INTO tblEmployeeFamilyMember
-                    (EmployeeID, MemberName, Relationship, Gender, DateOfBirth, ContactNumber, IsDependent, SortOrder)
+                    (EmployeeID, MemberName, Relationship, Gender, DateOfBirth, ContactNumber, IsDependent, SortOrder, CreatedOn, CreatedByUserID)
                 VALUES
-                    (@EmployeeID, @MemberName, @Relationship, @Gender, @DateOfBirth, @ContactNumber, @IsDependent, @SortOrder);", conn, tx);
+                    (@EmployeeID, @MemberName, @Relationship, @Gender, @DateOfBirth, @ContactNumber, @IsDependent, @SortOrder, GETDATE(), @CreatedByUserID);", conn, tx);
 
             insCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
             insCmd.Parameters.AddWithValue("@MemberName", member.MemberName.Trim());
@@ -1165,6 +1310,7 @@ public class EmployeeMasterModel : PageModel
             insCmd.Parameters.AddWithValue("@ContactNumber", string.IsNullOrWhiteSpace(member.ContactNumber) ? DBNull.Value : member.ContactNumber.Trim());
             insCmd.Parameters.AddWithValue("@IsDependent", member.IsDependent);
             insCmd.Parameters.AddWithValue("@SortOrder", sortOrder);
+            AuditHelper.AddCreatedBy(insCmd, _auth.CurrentUserId);
             insCmd.ExecuteNonQuery();
         }
     }
@@ -1183,9 +1329,9 @@ public class EmployeeMasterModel : PageModel
             sortOrder++;
             using var insCmd = new SqlCommand(@"
                 INSERT INTO tblEmployeeBank
-                    (EmployeeID, BankID, BranchCode,BranchName,AccountTitle, IBAN, SwiftBICCode, AccountType, AccountVerificationStatus, IsPrimary, SortOrder)
+                    (EmployeeID, BankID, BranchCode,BranchName,AccountTitle, IBAN, SwiftBICCode, AccountType, AccountVerificationStatus, IsPrimary, SortOrder, CreatedOn, CreatedByUserID)
                 VALUES
-                    (@EmployeeID, @BankID,@BranchCode,@BranchName, @AccountTitle, @IBAN, @SwiftBICCode, @AccountType, @AccountVerificationStatus, @IsPrimary, @SortOrder);", conn, tx);
+                    (@EmployeeID, @BankID,@BranchCode,@BranchName, @AccountTitle, @IBAN, @SwiftBICCode, @AccountType, @AccountVerificationStatus, @IsPrimary, @SortOrder, GETDATE(), @CreatedByUserID);", conn, tx);
 
             insCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
             insCmd.Parameters.AddWithValue("@BankID", bank.BankID);
@@ -1198,8 +1344,111 @@ public class EmployeeMasterModel : PageModel
             insCmd.Parameters.AddWithValue("@AccountVerificationStatus", string.IsNullOrWhiteSpace(bank.AccountVerificationStatus) ? "Pending" : bank.AccountVerificationStatus.Trim());
             insCmd.Parameters.AddWithValue("@IsPrimary", bank.IsPrimary);
             insCmd.Parameters.AddWithValue("@SortOrder", sortOrder);
+            AuditHelper.AddCreatedBy(insCmd, _auth.CurrentUserId);
             insCmd.ExecuteNonQuery();
         }
+    }
+
+    private void ReplaceEmployeeEducation(SqlConnection conn, SqlTransaction tx, int employeeID, List<EmployeeEducationInput> records)
+    {
+        using (var delCmd = new SqlCommand("DELETE FROM tblEmployeeEducation WHERE EmployeeID = @EmployeeID;", conn, tx))
+        {
+            delCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+            delCmd.ExecuteNonQuery();
+        }
+
+        int sortOrder = 0;
+        foreach (var edu in records.Where(e =>
+            !string.IsNullOrWhiteSpace(e.HighestQualification)
+            || !string.IsNullOrWhiteSpace(e.DegreeCertificate)
+            || !string.IsNullOrWhiteSpace(e.Institution)))
+        {
+            sortOrder++;
+            using var insCmd = new SqlCommand(@"
+                INSERT INTO tblEmployeeEducation
+                    (EmployeeID, HighestQualification, DegreeCertificate, Specialization, Institution,
+                     YearOfPassing, GradeCGPA, SortOrder, CreatedOn, CreatedByUserID)
+                VALUES
+                    (@EmployeeID, @HighestQualification, @DegreeCertificate, @Specialization, @Institution,
+                     @YearOfPassing, @GradeCGPA, @SortOrder, GETDATE(), @CreatedByUserID);", conn, tx);
+
+            insCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+            insCmd.Parameters.AddWithValue("@HighestQualification", string.IsNullOrWhiteSpace(edu.HighestQualification) ? DBNull.Value : edu.HighestQualification.Trim());
+            insCmd.Parameters.AddWithValue("@DegreeCertificate", string.IsNullOrWhiteSpace(edu.DegreeCertificate) ? DBNull.Value : edu.DegreeCertificate.Trim());
+            insCmd.Parameters.AddWithValue("@Specialization", string.IsNullOrWhiteSpace(edu.Specialization) ? DBNull.Value : edu.Specialization.Trim());
+            insCmd.Parameters.AddWithValue("@Institution", string.IsNullOrWhiteSpace(edu.Institution) ? DBNull.Value : edu.Institution.Trim());
+            insCmd.Parameters.AddWithValue("@YearOfPassing", ParseIntParam(edu.YearOfPassing));
+            insCmd.Parameters.AddWithValue("@GradeCGPA", string.IsNullOrWhiteSpace(edu.GradeCGPA) ? DBNull.Value : edu.GradeCGPA.Trim());
+            insCmd.Parameters.AddWithValue("@SortOrder", sortOrder);
+            AuditHelper.AddCreatedBy(insCmd, _auth.CurrentUserId);
+            insCmd.ExecuteNonQuery();
+        }
+    }
+
+    private void ReplaceEmployeeCertificates(SqlConnection conn, SqlTransaction tx, int employeeID, List<EmployeeCertificateInput> records)
+    {
+        using (var delCmd = new SqlCommand("DELETE FROM tblEmployeeCertificate WHERE EmployeeID = @EmployeeID;", conn, tx))
+        {
+            delCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+            delCmd.ExecuteNonQuery();
+        }
+
+        int sortOrder = 0;
+        for (int i = 0; i < records.Count; i++)
+        {
+            var cert = records[i];
+            if (string.IsNullOrWhiteSpace(cert.CertificationName)
+                && string.IsNullOrWhiteSpace(cert.CertificateNumber)
+                && string.IsNullOrWhiteSpace(cert.CertificationBody))
+                continue;
+
+            var docPath = cert.CertificateCopyPath;
+            var file = Request.Form.Files[$"CertCopy_{i}"];
+            var uploaded = SaveCertificateFile(file, employeeID, i);
+            if (!string.IsNullOrEmpty(uploaded))
+                docPath = uploaded;
+
+            sortOrder++;
+            using var insCmd = new SqlCommand(@"
+                INSERT INTO tblEmployeeCertificate
+                    (EmployeeID, CertificationName, CertificationBody, CertificateNumber,
+                     IssueDate, ExpiryDate, RenewalRequired, CertificateCopyPath,
+                     SortOrder, CreatedOn, CreatedByUserID)
+                VALUES
+                    (@EmployeeID, @CertificationName, @CertificationBody, @CertificateNumber,
+                     @IssueDate, @ExpiryDate, @RenewalRequired, @CertificateCopyPath,
+                     @SortOrder, GETDATE(), @CreatedByUserID);", conn, tx);
+
+            insCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+            insCmd.Parameters.AddWithValue("@CertificationName", string.IsNullOrWhiteSpace(cert.CertificationName) ? DBNull.Value : cert.CertificationName.Trim());
+            insCmd.Parameters.AddWithValue("@CertificationBody", string.IsNullOrWhiteSpace(cert.CertificationBody) ? DBNull.Value : cert.CertificationBody.Trim());
+            insCmd.Parameters.AddWithValue("@CertificateNumber", string.IsNullOrWhiteSpace(cert.CertificateNumber) ? DBNull.Value : cert.CertificateNumber.Trim());
+            insCmd.Parameters.AddWithValue("@IssueDate", ParseDateParam(cert.IssueDate));
+            insCmd.Parameters.AddWithValue("@ExpiryDate", ParseDateParam(cert.ExpiryDate));
+            insCmd.Parameters.AddWithValue("@RenewalRequired", cert.RenewalRequired);
+            insCmd.Parameters.AddWithValue("@CertificateCopyPath", string.IsNullOrWhiteSpace(docPath) ? DBNull.Value : docPath);
+            insCmd.Parameters.AddWithValue("@SortOrder", sortOrder);
+            AuditHelper.AddCreatedBy(insCmd, _auth.CurrentUserId);
+            insCmd.ExecuteNonQuery();
+        }
+    }
+
+    private string? SaveCertificateFile(IFormFile? file, int employeeId, int rowIndex)
+    {
+        if (file == null || file.Length == 0)
+            return null;
+
+        var uploads = Path.Combine(_env.WebRootPath, "uploads", "employee-certificates");
+        Directory.CreateDirectory(uploads);
+
+        var ext = Path.GetExtension(file.FileName);
+        var safeName = $"{employeeId}_{rowIndex}_{DateTime.UtcNow:yyyyMMddHHmmssfff}{ext}";
+        var fullPath = Path.Combine(uploads, safeName);
+
+        using (var fs = System.IO.File.Create(fullPath))
+            file.CopyTo(fs);
+
+        return $"/uploads/employee-certificates/{safeName}";
     }
 
     private List<EmployeeContactInput> LoadEmployeeContacts(SqlConnection conn, int employeeID)
@@ -1302,6 +1551,170 @@ public class EmployeeMasterModel : PageModel
             });
         }
         return banks;
+    }
+
+    private List<EmployeeEducationInput> LoadEmployeeEducation(SqlConnection conn, int employeeID)
+    {
+        var records = new List<EmployeeEducationInput>();
+        using var cmd = new SqlCommand(@"
+            SELECT HighestQualification, DegreeCertificate, Specialization, Institution,
+                   YearOfPassing, GradeCGPA
+            FROM tblEmployeeEducation
+            WHERE EmployeeID = @EmployeeID
+            ORDER BY SortOrder, EducationID;", conn);
+        cmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+        using var dr = cmd.ExecuteReader();
+        while (dr.Read())
+        {
+            records.Add(new EmployeeEducationInput
+            {
+                HighestQualification = dr["HighestQualification"] == DBNull.Value ? "" : dr["HighestQualification"].ToString() ?? "",
+                DegreeCertificate = dr["DegreeCertificate"] == DBNull.Value ? "" : dr["DegreeCertificate"].ToString() ?? "",
+                Specialization = dr["Specialization"] == DBNull.Value ? "" : dr["Specialization"].ToString() ?? "",
+                Institution = dr["Institution"] == DBNull.Value ? "" : dr["Institution"].ToString() ?? "",
+                YearOfPassing = dr["YearOfPassing"] == DBNull.Value ? "" : Convert.ToInt32(dr["YearOfPassing"]).ToString(),
+                GradeCGPA = dr["GradeCGPA"] == DBNull.Value ? "" : dr["GradeCGPA"].ToString() ?? ""
+            });
+        }
+        return records;
+    }
+
+    private List<EmployeeCertificateInput> LoadEmployeeCertificates(SqlConnection conn, int employeeID)
+    {
+        var records = new List<EmployeeCertificateInput>();
+        using var cmd = new SqlCommand(@"
+            SELECT CertificationName, CertificationBody, CertificateNumber,
+                   IssueDate, ExpiryDate, RenewalRequired, CertificateCopyPath
+            FROM tblEmployeeCertificate
+            WHERE EmployeeID = @EmployeeID
+            ORDER BY SortOrder, CertificateID;", conn);
+        cmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+        using var dr = cmd.ExecuteReader();
+        while (dr.Read())
+        {
+            records.Add(new EmployeeCertificateInput
+            {
+                CertificationName = dr["CertificationName"] == DBNull.Value ? "" : dr["CertificationName"].ToString() ?? "",
+                CertificationBody = dr["CertificationBody"] == DBNull.Value ? "" : dr["CertificationBody"].ToString() ?? "",
+                CertificateNumber = dr["CertificateNumber"] == DBNull.Value ? "" : dr["CertificateNumber"].ToString() ?? "",
+                IssueDate = dr["IssueDate"] == DBNull.Value ? "" : Convert.ToDateTime(dr["IssueDate"]).ToString("yyyy-MM-dd"),
+                ExpiryDate = dr["ExpiryDate"] == DBNull.Value ? "" : Convert.ToDateTime(dr["ExpiryDate"]).ToString("yyyy-MM-dd"),
+                RenewalRequired = dr["RenewalRequired"] != DBNull.Value && Convert.ToBoolean(dr["RenewalRequired"]),
+                CertificateCopyPath = dr["CertificateCopyPath"] == DBNull.Value ? "" : dr["CertificateCopyPath"].ToString() ?? ""
+            });
+        }
+        return records;
+    }
+
+    private void ReplaceEmployeeDocuments(SqlConnection conn, SqlTransaction tx, int employeeID, List<EmployeeDocumentInput> records)
+    {
+        using (var delCmd = new SqlCommand("DELETE FROM tblEmployeeDocument WHERE EmployeeID = @EmployeeID;", conn, tx))
+        {
+            delCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+            delCmd.ExecuteNonQuery();
+        }
+
+        int sortOrder = 0;
+        for (int i = 0; i < records.Count; i++)
+        {
+            var doc = records[i];
+            if (doc.DocumentTypeID <= 0
+                && string.IsNullOrWhiteSpace(doc.DocumentNumber)
+                && string.IsNullOrWhiteSpace(doc.DocumentPath)
+                && string.IsNullOrWhiteSpace(doc.Remarks))
+                continue;
+
+            var docPath = doc.DocumentPath;
+            var originalName = doc.OriginalFileName;
+            var file = Request.Form.Files[$"DocFile_{i}"];
+            var uploaded = SaveDocumentFile(file, employeeID, i);
+            if (!string.IsNullOrEmpty(uploaded.path))
+            {
+                docPath = uploaded.path;
+                originalName = uploaded.originalName;
+            }
+
+            var status = string.IsNullOrWhiteSpace(doc.VerificationStatus) ? "Pending" : doc.VerificationStatus.Trim();
+            var verifiedOn = status == "Verified" ? (object)DateTime.Now : DBNull.Value;
+            var verifiedBy = status == "Verified" ? (object)(_auth.CurrentUserId ?? 0) : DBNull.Value;
+            if (status == "Verified" && (_auth.CurrentUserId ?? 0) <= 0)
+                verifiedBy = DBNull.Value;
+
+            sortOrder++;
+            using var insCmd = new SqlCommand(@"
+                INSERT INTO tblEmployeeDocument
+                    (EmployeeID, DocumentTypeID, DocumentNumber, IssueDate, ExpiryDate, Remarks,
+                     DocumentPath, OriginalFileName, VerificationStatus, VerifiedOn, VerifiedByUserID,
+                     SortOrder, CreatedOn, CreatedByUserID)
+                VALUES
+                    (@EmployeeID, @DocumentTypeID, @DocumentNumber, @IssueDate, @ExpiryDate, @Remarks,
+                     @DocumentPath, @OriginalFileName, @VerificationStatus, @VerifiedOn, @VerifiedByUserID,
+                     @SortOrder, GETDATE(), @CreatedByUserID);", conn, tx);
+
+            insCmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+            insCmd.Parameters.AddWithValue("@DocumentTypeID", doc.DocumentTypeID <= 0 ? DBNull.Value : doc.DocumentTypeID);
+            insCmd.Parameters.AddWithValue("@DocumentNumber", string.IsNullOrWhiteSpace(doc.DocumentNumber) ? DBNull.Value : doc.DocumentNumber.Trim());
+            insCmd.Parameters.AddWithValue("@IssueDate", ParseDateParam(doc.IssueDate));
+            insCmd.Parameters.AddWithValue("@ExpiryDate", ParseDateParam(doc.ExpiryDate));
+            insCmd.Parameters.AddWithValue("@Remarks", string.IsNullOrWhiteSpace(doc.Remarks) ? DBNull.Value : doc.Remarks.Trim());
+            insCmd.Parameters.AddWithValue("@DocumentPath", string.IsNullOrWhiteSpace(docPath) ? DBNull.Value : docPath);
+            insCmd.Parameters.AddWithValue("@OriginalFileName", string.IsNullOrWhiteSpace(originalName) ? DBNull.Value : originalName);
+            insCmd.Parameters.AddWithValue("@VerificationStatus", status);
+            insCmd.Parameters.AddWithValue("@VerifiedOn", verifiedOn);
+            insCmd.Parameters.AddWithValue("@VerifiedByUserID", verifiedBy);
+            insCmd.Parameters.AddWithValue("@SortOrder", sortOrder);
+            AuditHelper.AddCreatedBy(insCmd, _auth.CurrentUserId);
+            insCmd.ExecuteNonQuery();
+        }
+    }
+
+    private (string? path, string? originalName) SaveDocumentFile(IFormFile? file, int employeeId, int rowIndex)
+    {
+        if (file == null || file.Length == 0)
+            return (null, null);
+
+        var uploads = Path.Combine(_env.WebRootPath, "uploads", "employee-documents");
+        Directory.CreateDirectory(uploads);
+
+        var ext = Path.GetExtension(file.FileName);
+        var safeName = $"{employeeId}_{rowIndex}_{DateTime.UtcNow:yyyyMMddHHmmssfff}{ext}";
+        var fullPath = Path.Combine(uploads, safeName);
+
+        using (var fs = System.IO.File.Create(fullPath))
+            file.CopyTo(fs);
+
+        return ($"/uploads/employee-documents/{safeName}", file.FileName);
+    }
+
+    private List<EmployeeDocumentInput> LoadEmployeeDocuments(SqlConnection conn, int employeeID)
+    {
+        var records = new List<EmployeeDocumentInput>();
+        using var cmd = new SqlCommand(@"
+            SELECT d.DocumentTypeID, dt.DocumentTypeName, d.DocumentNumber,
+                   d.IssueDate, d.ExpiryDate, d.Remarks,
+                   d.DocumentPath, d.OriginalFileName, d.VerificationStatus
+            FROM tblEmployeeDocument d
+            LEFT JOIN tblDocumentType dt ON dt.DocumentTypeID = d.DocumentTypeID
+            WHERE d.EmployeeID = @EmployeeID
+            ORDER BY d.SortOrder, d.EmployeeDocumentID;", conn);
+        cmd.Parameters.AddWithValue("@EmployeeID", employeeID);
+        using var dr = cmd.ExecuteReader();
+        while (dr.Read())
+        {
+            records.Add(new EmployeeDocumentInput
+            {
+                DocumentTypeID = dr["DocumentTypeID"] == DBNull.Value ? 0 : Convert.ToInt32(dr["DocumentTypeID"]),
+                DocumentTypeName = dr["DocumentTypeName"] == DBNull.Value ? "" : dr["DocumentTypeName"].ToString() ?? "",
+                DocumentNumber = dr["DocumentNumber"] == DBNull.Value ? "" : dr["DocumentNumber"].ToString() ?? "",
+                IssueDate = dr["IssueDate"] == DBNull.Value ? "" : Convert.ToDateTime(dr["IssueDate"]).ToString("yyyy-MM-dd"),
+                ExpiryDate = dr["ExpiryDate"] == DBNull.Value ? "" : Convert.ToDateTime(dr["ExpiryDate"]).ToString("yyyy-MM-dd"),
+                Remarks = dr["Remarks"] == DBNull.Value ? "" : dr["Remarks"].ToString() ?? "",
+                DocumentPath = dr["DocumentPath"] == DBNull.Value ? "" : dr["DocumentPath"].ToString() ?? "",
+                OriginalFileName = dr["OriginalFileName"] == DBNull.Value ? "" : dr["OriginalFileName"].ToString() ?? "",
+                VerificationStatus = dr["VerificationStatus"] == DBNull.Value ? "Pending" : dr["VerificationStatus"].ToString() ?? "Pending"
+            });
+        }
+        return records;
     }
 
     private List<T> DeserializeList<T>(string json)

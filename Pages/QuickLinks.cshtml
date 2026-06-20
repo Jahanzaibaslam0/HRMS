@@ -1,0 +1,81 @@
+@page
+@model HRMS.Pages.QuickLinksModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        <div class="quick-links-intro">
+            <p>Access HR processes and organization software from one place.</p>
+        </div>
+
+        <section class="quick-links-section">
+            <div class="quick-links-section-header">
+                <h2>HR Processes</h2>
+                <span class="quick-links-count">@Model.HrProcessLinks.Count links</span>
+            </div>
+            <div class="quick-links-grid">
+                @foreach (var link in Model.HrProcessLinks)
+                {
+                    <a href="@link.Url" class="quick-link-card quick-link-card--process">
+                        <div class="quick-link-icon">@link.Icon</div>
+                        <div class="quick-link-body">
+                            <h3>@link.Title</h3>
+                            <p>@link.Description</p>
+                            <span class="quick-link-badge">@link.Category</span>
+                        </div>
+                        <span class="quick-link-arrow">&#8594;</span>
+                    </a>
+                }
+            </div>
+        </section>
+
+        <section class="quick-links-section">
+            <div class="quick-links-section-header">
+                <h2>Organization Software</h2>
+                <span class="quick-links-count">@Model.SoftwareLinks.Count links</span>
+            </div>
+            @if (Model.SoftwareLinks.Count == 0)
+            {
+                <div class="card">
+                    <div class="card-body" style="text-align:center; padding:2rem; color:#64748b;">
+                        No software links configured yet.
+                        <br />
+                        <a href="/SoftwareLinkSetup" class="btn btn-secondary" style="margin-top:.75rem;">Configure Software Links</a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="quick-links-grid">
+                    @foreach (var link in Model.SoftwareLinks)
+                    {
+                        <a href="@link.Url" class="quick-link-card quick-link-card--software" target="_blank" rel="noopener noreferrer">
+                            <div class="quick-link-icon quick-link-icon--software">@link.Icon</div>
+                            <div class="quick-link-body">
+                                <h3>@link.Title</h3>
+                                @if (!string.IsNullOrEmpty(link.Description))
+                                {
+                                    <p>@link.Description</p>
+                                }
+                                <span class="quick-link-badge">@link.Category</span>
+                            </div>
+                            <span class="quick-link-arrow">&#8599;</span>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+</body>
+</html>

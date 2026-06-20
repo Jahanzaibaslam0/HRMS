@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class LocationSetupModel : LookupSetupPageModel
 {
-    public LocationSetupModel(IConfiguration config) : base(config) { }
+    public LocationSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblLocation";
     protected override string IdColumn => "LocationID";

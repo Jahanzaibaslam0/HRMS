@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -20,10 +21,12 @@ public class LanguageRecord
 public class LanguageSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
-    public LanguageSetupModel(IConfiguration config)
+    public LanguageSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     public LanguageRecord Input { get; set; } = new();
@@ -82,9 +85,11 @@ public class LanguageSetupModel : PageModel
                         Source = @Source,
                         IsPriority = @IsPriority,
                         IsActive = @IsActive,
-                        ModifiedOn = GETDATE()
+                        ModifiedOn = GETDATE(),
+                        ModifiedByUserID = @ModifiedByUserID
                     WHERE LanguageID = @LanguageID;", conn);
                 AddSaveParameters(cmd, languageID, languageCode, languageName, nativeName, region, source, isPriority, isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
 
                 TempData["Alert"] = "Language record updated successfully.";
@@ -93,10 +98,11 @@ public class LanguageSetupModel : PageModel
             {
                 using var cmd = new SqlCommand(@"
                     INSERT INTO tblLanguage
-                        (LanguageCode, LanguageName, NativeName, Region, Source, IsPriority, IsActive)
+                        (LanguageCode, LanguageName, NativeName, Region, Source, IsPriority, IsActive, CreatedOn, CreatedByUserID)
                     VALUES
-                        (@LanguageCode, @LanguageName, @NativeName, @Region, @Source, @IsPriority, @IsActive);", conn);
+                        (@LanguageCode, @LanguageName, @NativeName, @Region, @Source, @IsPriority, @IsActive, GETDATE(), @CreatedByUserID);", conn);
                 AddSaveParameters(cmd, languageID, languageCode, languageName, nativeName, region, source, isPriority, isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
 
                 TempData["Alert"] = "Language record added successfully.";
@@ -126,9 +132,11 @@ public class LanguageSetupModel : PageModel
             using var cmd = new SqlCommand(@"
                 UPDATE tblLanguage
                 SET IsActive = 0,
-                    ModifiedOn = GETDATE()
+                    ModifiedOn = GETDATE(),
+                    ModifiedByUserID = @ModifiedByUserID
                 WHERE LanguageID = @LanguageID;", conn);
             cmd.Parameters.AddWithValue("@LanguageID", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             conn.Open();
             cmd.ExecuteNonQuery();
 
@@ -336,7 +344,7 @@ public class LanguageSetupModel : PageModel
         return normalized is "true" or "yes" or "y" or "1" or "active" or "priority";
     }
 
-    private static void UpsertLanguage(SqlConnection conn, SqlTransaction tx, LanguageRecord record)
+    private void UpsertLanguage(SqlConnection conn, SqlTransaction tx, LanguageRecord record)
     {
         var existingId = record.LanguageID > 0
             ? GetLanguageIdById(conn, tx, record.LanguageID)
@@ -353,19 +361,22 @@ public class LanguageSetupModel : PageModel
                     Source = @Source,
                     IsPriority = @IsPriority,
                     IsActive = @IsActive,
-                    ModifiedOn = GETDATE()
+                    ModifiedOn = GETDATE(),
+                    ModifiedByUserID = @ModifiedByUserID
                 WHERE LanguageID = @LanguageID;", conn, tx);
             AddSaveParameters(updateCmd, existingId, record.LanguageCode, record.LanguageName, record.NativeName, record.Region, record.Source, record.IsPriority, record.IsActive);
+            AuditHelper.AddModifiedBy(updateCmd, _auth.CurrentUserId);
             updateCmd.ExecuteNonQuery();
             return;
         }
 
         using var insertCmd = new SqlCommand(@"
             INSERT INTO tblLanguage
-                (LanguageCode, LanguageName, NativeName, Region, Source, IsPriority, IsActive)
+                (LanguageCode, LanguageName, NativeName, Region, Source, IsPriority, IsActive, CreatedOn, CreatedByUserID)
             VALUES
-                (@LanguageCode, @LanguageName, @NativeName, @Region, @Source, @IsPriority, @IsActive);", conn, tx);
+                (@LanguageCode, @LanguageName, @NativeName, @Region, @Source, @IsPriority, @IsActive, GETDATE(), @CreatedByUserID);", conn, tx);
         AddSaveParameters(insertCmd, 0, record.LanguageCode, record.LanguageName, record.NativeName, record.Region, record.Source, record.IsPriority, record.IsActive);
+        AuditHelper.AddCreatedBy(insertCmd, _auth.CurrentUserId);
         insertCmd.ExecuteNonQuery();
     }
 

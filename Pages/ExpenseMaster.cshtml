@@ -1,0 +1,286 @@
+@page
+@model HRMS.Pages.ExpenseMasterModel
+@{
+    Layout = null;
+    var pageTitle = Model.ShowForm
+        ? (Model.EditMode ? "Edit Expense" : "New Expense")
+        : "Expense Process";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS – @pageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+    <style>
+        .exp-list-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
+        .exp-list-header .right-controls { display:flex; align-items:center; gap:.6rem; }
+        .form-breadcrumb { display:flex; align-items:center; gap:.75rem; margin-bottom:1rem; padding:.5rem .75rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; }
+        .form-breadcrumb .crumb-sep { color:#9ca3af; }
+        .form-breadcrumb .crumb-current { font-weight:600; color:#111827; }
+        .detail-table input[type="file"] { font-size:.75rem; max-width:140px; }
+        .receipt-link { font-size:.75rem; color:#0369a1; }
+    </style>
+</head>
+<body>
+
+    @await Html.PartialAsync("_AppHeader", pageTitle)
+
+    <main class="container">
+
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        @if (!Model.ShowForm)
+        {
+            <div class="card">
+                <div class="card-header exp-list-header">
+                    <h2>Expense List</h2>
+                    <div class="right-controls">
+                        <input type="text" id="txtSearch" class="form-control" style="width:240px"
+                               placeholder="Search employee / purpose / status…"
+                               onkeyup="searchExpenseTable(this.value)" />
+                        <a href="/ExpenseMaster?newExpense=true" class="btn btn-primary">+ New Expense</a>
+                    </div>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="data-table" id="expenseTable">
+                        <thead class="grid-header">
+                            <tr>
+                                <th>#</th>
+                                <th>Expense ID</th>
+                                <th>Employee</th>
+                                <th>Expense Date</th>
+                                <th>Location</th>
+                                <th>Purpose</th>
+                                <th>Lines</th>
+                                <th>Total Amount</th>
+                                <th>Workflow</th>
+                                <th>Document</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Expenses.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="11" class="empty-cell" style="text-align:center; padding:2rem; color:#6b7280;">
+                                        No expense records found.
+                                        <br />
+                                        <a href="/ExpenseMaster?newExpense=true" class="btn btn-primary" style="margin-top:.75rem;">+ Add First Expense</a>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                int rowNum = 0;
+                                foreach (var exp in Model.Expenses)
+                                {
+                                    rowNum++;
+                                    <tr class="@(rowNum % 2 == 0 ? "grid-alt-row" : "grid-row")">
+                                        <td>@rowNum</td>
+                                        <td><strong>#@exp.ExpenseID</strong></td>
+                                        <td>@exp.EmployeeCode<br /><span style="font-size:.8rem;color:#6b7280;">@exp.EmployeeName</span></td>
+                                        <td>@exp.ExpenseDate?.ToString("dd MMM yyyy")</td>
+                                        <td>@exp.LocationName</td>
+                                        <td>@exp.ExpensePurpose</td>
+                                        <td>@exp.LineCount</td>
+                                        <td>@exp.TotalAmount.ToString("N2")</td>
+                                        <td><span class="badge badge-info">@exp.WorkflowStatus</span></td>
+                                        <td><span class="badge badge-warning">@exp.DocumentStatus</span></td>
+                                        <td class="actions-col" style="white-space:nowrap;">
+                                            <a href="/ExpenseMaster?editId=@exp.ExpenseID" class="btn btn-secondary" style="padding:3px 12px; font-size:.8rem;">Edit</a>
+                                            <form method="post" asp-page-handler="Delete" style="display:inline"
+                                                  onsubmit="return confirm('Delete this expense and all line items?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="deleteId" value="@exp.ExpenseID" />
+                                                <button type="submit" class="btn btn-danger" style="padding:3px 10px; font-size:.8rem;">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <span class="record-count">Total Records: @Model.Expenses.Count</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="form-breadcrumb">
+                <a href="/ExpenseMaster" class="btn btn-secondary" style="padding:4px 14px;">&#8592; Back to List</a>
+                <span class="crumb-sep">/</span>
+                <span class="crumb-current">@(Model.EditMode ? "Edit Expense" : "New Expense")</span>
+                @if (Model.EditMode)
+                {
+                    <span class="crumb-sep">–</span>
+                    <span style="color:#4b5563; font-size:.9rem;">Expense #@Model.Input.ExpenseID</span>
+                }
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>@(Model.EditMode ? "Edit Expense Header" : "Add Expense Header")</h2>
+                </div>
+
+                <form method="post" id="expenseForm" enctype="multipart/form-data" novalidate onsubmit="return prepareExpensePayload();">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ExpenseID" value="@Model.Input.ExpenseID" />
+                    <input type="hidden" name="EditMode" value="@(Model.EditMode ? "true" : "false")" />
+                    <input type="hidden" name="DetailsJson" id="DetailsJson" />
+
+                    <div class="card-body">
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Expense Parent</h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Employee <span class="required">*</span></label>
+                                <select name="EmployeeID" id="ddlEmployee" class="form-control" required>
+                                    <option value="">-- Select Employee --</option>
+                                    @foreach (var emp in Model.Employees)
+                                    {
+                                        if (Model.Input.EmployeeID == emp.Id)
+                                        { <option value="@emp.Id" selected>@emp.Name</option> }
+                                        else
+                                        { <option value="@emp.Id">@emp.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Expense Date</label>
+                                <input type="date" name="ExpenseDate" class="form-control" value="@Model.Input.ExpenseDate" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Location</label>
+                                <select name="LocationID" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var loc in Model.Locations)
+                                    {
+                                        if (Model.Input.LocationID == loc.Id)
+                                        { <option value="@loc.Id" selected>@loc.Name</option> }
+                                        else
+                                        { <option value="@loc.Id">@loc.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Workflow Status</label>
+                                <select name="WorkflowStatus" class="form-control">
+                                    @{
+                                        var wfStatuses = new[] { "Draft", "Submitted", "In Review", "Approved", "Rejected" };
+                                        foreach (var s in wfStatuses)
+                                        {
+                                            if (Model.Input.WorkflowStatus == s)
+                                            { <option value="@s" selected>@s</option> }
+                                            else
+                                            { <option value="@s">@s</option> }
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Document Status</label>
+                                <select name="DocumentStatus" class="form-control">
+                                    @{
+                                        var docStatuses = new[] { "Pending", "Incomplete", "Complete", "Verified" };
+                                        foreach (var s in docStatuses)
+                                        {
+                                            if (Model.Input.DocumentStatus == s)
+                                            { <option value="@s" selected>@s</option> }
+                                            else
+                                            { <option value="@s">@s</option> }
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label>Expense Purpose</label>
+                                <textarea name="ExpensePurpose" class="form-control" rows="2" maxlength="500">@Model.Input.ExpensePurpose</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Vehicle No</label>
+                                <input type="text" name="VehicleNo" class="form-control" maxlength="50" value="@Model.Input.VehicleNo" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Meter Reading</label>
+                                <input type="text" name="MeterReading" class="form-control" maxlength="50" value="@Model.Input.MeterReading" />
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width mt-4">
+                            <div class="card">
+                                <div class="card-header space-between">
+                                    <h2>Expense Line Items (Child)</h2>
+                                    <button type="button" class="btn btn-secondary" onclick="addExpenseDetailRow()">+ Add Line</button>
+                                </div>
+                                <div class="card-body table-responsive">
+                                    <table class="data-table detail-table" id="expenseDetailTable">
+                                        <thead class="grid-header">
+                                            <tr>
+                                                <th>Category</th>
+                                                <th>Description</th>
+                                                <th>Payment Method</th>
+                                                <th>Txn Date</th>
+                                                <th>Currency</th>
+                                                <th>Txn Amount</th>
+                                                <th>Amount</th>
+                                                <th>Approval</th>
+                                                <th>Receipt ID</th>
+                                                <th>Receipt Doc</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer" style="display:flex; gap:.75rem;">
+                        <button type="submit" class="btn btn-primary">
+                            @(Model.EditMode ? "Update Expense" : "Save Expense")
+                        </button>
+                        <a href="/ExpenseMaster" class="btn btn-secondary">&#8592; Back to List</a>
+                    </div>
+                </form>
+            </div>
+        }
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+
+    @if (Model.ShowForm)
+    {
+        <script id="initialExpenseDetailsData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DetailRecords))</script>
+        <script id="expenseCategoryData" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ExpenseCategories))</script>
+        <script src="/js/expense.js?v=1"></script>
+    }
+    else
+    {
+        <script>
+            function searchExpenseTable(q) {
+                q = q.toLowerCase();
+                document.querySelectorAll('#expenseTable tbody tr').forEach(function (row) {
+                    row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+                });
+            }
+        </script>
+    }
+</body>
+</html>

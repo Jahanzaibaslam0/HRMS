@@ -1,3 +1,4 @@
+using HRMS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
@@ -19,6 +20,7 @@ public class BenefitRecord
 public class BenefitEntitlementSetupModel : PageModel
 {
     private readonly string _conn;
+    private readonly AuthService _auth;
 
     public string PageTitle => "Benefit Entitlement Setup";
 
@@ -36,9 +38,10 @@ public class BenefitEntitlementSetupModel : PageModel
     public string AlertMessage          { get; set; } = "";
     public string AlertType             { get; set; } = "success";
 
-    public BenefitEntitlementSetupModel(IConfiguration config)
+    public BenefitEntitlementSetupModel(IConfiguration config, AuthService auth)
     {
         _conn = config.GetConnectionString("HRMSConnection")!;
+        _auth = auth;
     }
 
     // ── GET ───────────────────────────────────────────────────────────
@@ -114,12 +117,14 @@ public class BenefitEntitlementSetupModel : PageModel
                         BenefitEntitlementName = @Name,
                         AliasName              = @Alias,
                         IsActive               = @IsActive,
-                        ModifiedOn             = GETDATE()
+                        ModifiedOn             = GETDATE(),
+                        ModifiedByUserID       = @ModifiedByUserID
                     WHERE BenefitEntitlementID = @Id;", conn);
                 cmd.Parameters.AddWithValue("@Id",       itemId);
                 cmd.Parameters.AddWithValue("@Name",     itemName.Trim());
                 cmd.Parameters.AddWithValue("@Alias",    string.IsNullOrWhiteSpace(aliasName) ? DBNull.Value : (object)aliasName.Trim());
                 cmd.Parameters.AddWithValue("@IsActive", isActive);
+                AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
                 cmd.ExecuteNonQuery();
                 savedId = itemId;
                 TempData["Alert"] = "Benefit Entitlement updated successfully.";
@@ -127,12 +132,13 @@ public class BenefitEntitlementSetupModel : PageModel
             else
             {
                 using var cmd = new SqlCommand(@"
-                    INSERT INTO tblBenefitEntitlement (BenefitEntitlementName, AliasName, IsActive)
-                    VALUES (@Name, @Alias, @IsActive);
+                    INSERT INTO tblBenefitEntitlement (BenefitEntitlementName, AliasName, IsActive, CreatedOn, CreatedByUserID)
+                    VALUES (@Name, @Alias, @IsActive, GETDATE(), @CreatedByUserID);
                     SELECT CAST(SCOPE_IDENTITY() AS INT);", conn);
                 cmd.Parameters.AddWithValue("@Name",     itemName.Trim());
                 cmd.Parameters.AddWithValue("@Alias",    string.IsNullOrWhiteSpace(aliasName) ? DBNull.Value : (object)aliasName.Trim());
                 cmd.Parameters.AddWithValue("@IsActive", isActive);
+                AuditHelper.AddCreatedBy(cmd, _auth.CurrentUserId);
                 savedId = Convert.ToInt32(cmd.ExecuteScalar());
                 TempData["Alert"] = "Benefit Entitlement added successfully.";
             }
@@ -162,9 +168,10 @@ public class BenefitEntitlementSetupModel : PageModel
             using var conn = new SqlConnection(_conn);
             conn.Open();
             using var cmd = new SqlCommand(@"
-                UPDATE tblBenefitEntitlement SET IsActive = 0, ModifiedOn = GETDATE()
+                UPDATE tblBenefitEntitlement SET IsActive = 0, ModifiedOn = GETDATE(), ModifiedByUserID = @ModifiedByUserID
                 WHERE BenefitEntitlementID = @Id;", conn);
             cmd.Parameters.AddWithValue("@Id", deleteId);
+            AuditHelper.AddModifiedBy(cmd, _auth.CurrentUserId);
             cmd.ExecuteNonQuery();
             TempData["Alert"]     = "Benefit Entitlement removed.";
             TempData["AlertType"] = "success";

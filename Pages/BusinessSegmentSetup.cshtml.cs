@@ -1,8 +1,9 @@
+using HRMS.Services;
 namespace HRMS.Pages;
 
 public class BusinessSegmentSetupModel : LookupSetupPageModel
 {
-    public BusinessSegmentSetupModel(IConfiguration config) : base(config) { }
+    public BusinessSegmentSetupModel(IConfiguration config, AuthService auth) : base(config, auth) { }
 
     protected override string TableName => "tblBusinessSegment";
     protected override string IdColumn => "BusinessSegmentID";

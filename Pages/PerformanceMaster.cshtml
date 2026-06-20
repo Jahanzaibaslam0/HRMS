@@ -1,0 +1,322 @@
+@page
+@model HRMS.Pages.PerformanceMasterModel
+@{
+    Layout = null;
+    var pageTitle = Model.ShowForm
+        ? (Model.EditMode ? "Edit Performance" : "New Performance")
+        : "Employee Performance";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS – @pageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+    <style>
+        .perf-list-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; }
+        .perf-list-header .right-controls { display:flex; align-items:center; gap:.6rem; }
+        .form-breadcrumb { display:flex; align-items:center; gap:.75rem; margin-bottom:1rem; padding:.5rem .75rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:6px; }
+        .form-breadcrumb .crumb-sep { color:#9ca3af; }
+        .form-breadcrumb .crumb-current { font-weight:600; color:#111827; }
+        .yn-badge-yes { background:#dcfce7; color:#166534; padding:2px 8px; border-radius:12px; font-size:.75rem; font-weight:600; }
+        .yn-badge-no  { background:#f3f4f6; color:#6b7280; padding:2px 8px; border-radius:12px; font-size:.75rem; font-weight:600; }
+    </style>
+</head>
+<body>
+
+    @await Html.PartialAsync("_AppHeader", pageTitle)
+
+    <main class="container">
+
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        @if (!Model.ShowForm)
+        {
+            <div class="card">
+                <div class="card-header perf-list-header">
+                    <h2>Performance Records</h2>
+                    <div class="right-controls">
+                        <input type="text" id="txtSearch" class="form-control" style="width:260px"
+                               placeholder="Search employee / cycle / rating…"
+                               onkeyup="searchPerfTable(this.value)" />
+                        <a href="/PerformanceMaster?newRecord=true" class="btn btn-primary">+ New Performance</a>
+                    </div>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="data-table" id="perfTable">
+                        <thead class="grid-header">
+                            <tr>
+                                <th>#</th>
+                                <th>ID</th>
+                                <th>Employee</th>
+                                <th>Review Cycle</th>
+                                <th>Last Review</th>
+                                <th>Rating</th>
+                                <th>Score</th>
+                                <th>Next Due</th>
+                                <th>Goal %</th>
+                                <th>Promotion</th>
+                                <th>Succession</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.Records.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="12" style="text-align:center; padding:2rem; color:#6b7280;">
+                                        No performance records found.
+                                        <br />
+                                        <a href="/PerformanceMaster?newRecord=true" class="btn btn-primary" style="margin-top:.75rem;">+ Add First Record</a>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                int rowNum = 0;
+                                foreach (var r in Model.Records)
+                                {
+                                    rowNum++;
+                                    <tr class="@(rowNum % 2 == 0 ? "grid-alt-row" : "grid-row")">
+                                        <td>@rowNum</td>
+                                        <td><strong>#@r.PerformanceID</strong></td>
+                                        <td>@r.EmployeeCode<br /><span style="font-size:.8rem;color:#6b7280;">@r.EmployeeName</span></td>
+                                        <td>@r.PerformanceReviewCycle</td>
+                                        <td>@r.LastReviewDate?.ToString("dd MMM yyyy")</td>
+                                        <td><span class="badge badge-info">@r.LastReviewRating</span></td>
+                                        <td>@(r.LastReviewScore?.ToString("N2") ?? "—")</td>
+                                        <td>@r.NextReviewDue?.ToString("dd MMM yyyy")</td>
+                                        <td>@(r.GoalAchievementPercent.HasValue ? r.GoalAchievementPercent.Value.ToString("N1") + "%" : "—")</td>
+                                        <td><span class="@(r.PromotionReady ? "yn-badge-yes" : "yn-badge-no")">@(r.PromotionReady ? "Yes" : "No")</span></td>
+                                        <td><span class="@(r.SuccessionPool ? "yn-badge-yes" : "yn-badge-no")">@(r.SuccessionPool ? "Yes" : "No")</span></td>
+                                        <td style="white-space:nowrap;">
+                                            <a href="/PerformanceMaster?editId=@r.PerformanceID" class="btn btn-secondary" style="padding:3px 12px; font-size:.8rem;">Edit</a>
+                                            <form method="post" asp-page-handler="Delete" style="display:inline"
+                                                  onsubmit="return confirm('Delete this performance record?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="deleteId" value="@r.PerformanceID" />
+                                                <button type="submit" class="btn btn-danger" style="padding:3px 10px; font-size:.8rem;">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <span class="record-count">Total Records: @Model.Records.Count</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="form-breadcrumb">
+                <a href="/PerformanceMaster" class="btn btn-secondary" style="padding:4px 14px;">&#8592; Back to List</a>
+                <span class="crumb-sep">/</span>
+                <span class="crumb-current">@(Model.EditMode ? "Edit Performance" : "New Performance")</span>
+                @if (Model.EditMode)
+                {
+                    <span class="crumb-sep">–</span>
+                    <span style="color:#4b5563; font-size:.9rem;">Record #@Model.Input.PerformanceID</span>
+                }
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>@(Model.EditMode ? "Edit Performance Details" : "Add Performance Record")</h2>
+                </div>
+
+                <form method="post" id="perfForm" novalidate>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="PerformanceID" value="@Model.Input.PerformanceID" />
+                    <input type="hidden" name="EditMode" value="@(Model.EditMode ? "true" : "false")" />
+
+                    <div class="card-body">
+                        <div class="form-grid">
+
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Employee & Review</h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Employee <span class="required">*</span></label>
+                                <select name="EmployeeID" class="form-control" required>
+                                    <option value="">-- Select Employee --</option>
+                                    @foreach (var emp in Model.Employees)
+                                    {
+                                        if (Model.Input.EmployeeID == emp.Id)
+                                        { <option value="@emp.Id" selected>@emp.Name</option> }
+                                        else
+                                        { <option value="@emp.Id">@emp.Name</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Performance Review Cycle</label>
+                                <select name="PerformanceReviewCycle" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var c in Model.ReviewCycleOptions)
+                                    {
+                                        if (Model.Input.PerformanceReviewCycle == c)
+                                        { <option value="@c" selected>@c</option> }
+                                        else
+                                        { <option value="@c">@c</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Last Review Date</label>
+                                <input type="date" name="LastReviewDate" class="form-control" value="@Model.Input.LastReviewDate" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Last Review Rating</label>
+                                <select name="LastReviewRating" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var r in Model.ReviewRatingOptions)
+                                    {
+                                        if (Model.Input.LastReviewRating == r)
+                                        { <option value="@r" selected>@r</option> }
+                                        else
+                                        { <option value="@r">@r</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Last Review Score</label>
+                                <input type="number" name="LastReviewScore" class="form-control"
+                                       step="0.01" min="0" max="100" placeholder="e.g. 85.5"
+                                       value="@Model.Input.LastReviewScore" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Next Review Due</label>
+                                <input type="date" name="NextReviewDue" class="form-control" value="@Model.Input.NextReviewDue" />
+                            </div>
+
+                            <div class="form-group full-width">
+                                <h3 class="form-section-title">Goals & Development</h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label>KPIs Assigned</label>
+                                <select name="KPIsAssigned" class="form-control">
+                                    @if (!Model.Input.KPIsAssigned)
+                                    {
+                                        <option value="false" selected>No</option>
+                                        <option value="true">Yes</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="false">No</option>
+                                        <option value="true" selected>Yes</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Goal Achievement %</label>
+                                <input type="number" name="GoalAchievementPercent" class="form-control"
+                                       step="0.1" min="0" max="100" placeholder="0 – 100"
+                                       value="@Model.Input.GoalAchievementPercent" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Performance Improvement Plan</label>
+                                <select name="PerformanceImprovementPlan" class="form-control">
+                                    @if (!Model.Input.PerformanceImprovementPlan)
+                                    {
+                                        <option value="false" selected>No</option>
+                                        <option value="true">Yes</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="false">No</option>
+                                        <option value="true" selected>Yes</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Career Path</label>
+                                <select name="CareerPath" class="form-control">
+                                    <option value="">-- Select --</option>
+                                    @foreach (var p in Model.CareerPathOptions)
+                                    {
+                                        if (Model.Input.CareerPath == p)
+                                        { <option value="@p" selected>@p</option> }
+                                        else
+                                        { <option value="@p">@p</option> }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Promotion Ready</label>
+                                <select name="PromotionReady" class="form-control">
+                                    @if (!Model.Input.PromotionReady)
+                                    {
+                                        <option value="false" selected>No</option>
+                                        <option value="true">Yes</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="false">No</option>
+                                        <option value="true" selected>Yes</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Succession Pool</label>
+                                <select name="SuccessionPool" class="form-control">
+                                    @if (!Model.Input.SuccessionPool)
+                                    {
+                                        <option value="false" selected>No</option>
+                                        <option value="true">Yes</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="false">No</option>
+                                        <option value="true" selected>Yes</option>
+                                    }
+                                </select>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="card-footer" style="display:flex; gap:.75rem;">
+                        <button type="submit" class="btn btn-primary">
+                            @(Model.EditMode ? "Update Performance" : "Save Performance")
+                        </button>
+                        <a href="/PerformanceMaster" class="btn btn-secondary">&#8592; Back to List</a>
+                    </div>
+                </form>
+            </div>
+        }
+    </main>
+
+    @await Html.PartialAsync("_AppFooter")
+
+    @if (!Model.ShowForm)
+    {
+        <script>
+            function searchPerfTable(q) {
+                q = q.toLowerCase();
+                document.querySelectorAll('#perfTable tbody tr').forEach(function (row) {
+                    row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+                });
+            }
+        </script>
+    }
+</body>
+</html>

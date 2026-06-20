@@ -1,0 +1,126 @@
+@page
+@model HRMS.Pages.NotificationSetupModel
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRMS - @Model.PageTitle</title>
+    <link rel="stylesheet" href="/css/style.css?v=5" />
+</head>
+<body>
+    @await Html.PartialAsync("_AppHeader", Model.PageTitle)
+
+    <main class="container">
+        @if (!string.IsNullOrEmpty(Model.AlertMessage))
+        {
+            <div class="alert alert-@Model.AlertType">@Model.AlertMessage</div>
+        }
+
+        <div class="card">
+            <div class="card-header">
+                <h2>@(Model.Input.NotificationID > 0 ? "Edit Notification" : "Add Notification")</h2>
+            </div>
+            <form method="post" asp-page-handler="Save">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="notificationID" value="@Model.Input.NotificationID" />
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>ID</label>
+                            <input type="text" class="form-control" value="@(Model.Input.NotificationID > 0 ? Model.Input.NotificationID.ToString() : "Auto")" readonly />
+                        </div>
+                        <div class="form-group">
+                            <label>Name <span class="required">*</span></label>
+                            <input type="text" name="notificationName" class="form-control" value="@Model.Input.Name" maxlength="150" />
+                        </div>
+                        <div class="form-group">
+                            <label>Department</label>
+                            <select name="departmentID" class="form-control">
+                                <option value="0">All Departments</option>
+                                @foreach (var dept in Model.Departments)
+                                {
+                                    <option value="@dept.Id" selected="@(Model.Input.DepartmentID == dept.Id)">@dept.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Start Date <span class="required">*</span></label>
+                            <input type="date" name="startDate" class="form-control" value="@Model.Input.StartDate.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="form-group">
+                            <label>Valid Till Date <span class="required">*</span></label>
+                            <input type="date" name="validTillDate" class="form-control" value="@Model.Input.ValidTillDate.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="form-group">
+                            <label>Activate Status</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="isActive" value="true" @(Model.Input.IsActive ? "checked" : "") />
+                                Active
+                            </label>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Description</label>
+                            <textarea name="description" class="form-control" rows="4" maxlength="2000">@Model.Input.Description</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.Input.NotificationID > 0 ? "Update Notification" : "Save Notification")</button>
+                    <a href="/NotificationSetup" class="btn btn-secondary">Clear</a>
+                    <a href="/Notifications" class="btn btn-secondary">View Notifications</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header"><h2>Notification List</h2></div>
+            <div class="card-body table-responsive">
+                <table class="data-table">
+                    <thead class="grid-header">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Start</th>
+                            <th>Valid Till</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Records.Count == 0)
+                        {
+                            <tr class="empty-row"><td colspan="7">No notifications found.</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model.Records)
+                            {
+                                <tr>
+                                    <td>@item.NotificationID</td>
+                                    <td>@item.Name</td>
+                                    <td>@(item.DepartmentID > 0 ? item.DepartmentName : "All Departments")</td>
+                                    <td>@item.StartDate.ToString("dd-MMM-yyyy")</td>
+                                    <td>@item.ValidTillDate.ToString("dd-MMM-yyyy")</td>
+                                    <td><span class="badge @(item.IsActive ? "badge-success" : "badge-danger")">@(item.IsActive ? "Active" : "Inactive")</span></td>
+                                    <td class="actions-col">
+                                        <a class="btn-icon btn-edit" href="/NotificationSetup?editId=@item.NotificationID" title="Edit">Edit</a>
+                                        <form method="post" asp-page-handler="Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="deleteId" value="@item.NotificationID" />
+                                            <button type="submit" class="btn-icon btn-delete" title="Remove">X</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    @await Html.PartialAsync("_AppFooter")
+</body>
+</html>
